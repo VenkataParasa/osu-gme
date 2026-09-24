@@ -1,6 +1,8 @@
 # GME Central — Resident & Program Data Management
 
-A presentation-ready React + TypeScript application implementing the supplied Module 1 prompt and RFP §9.1.a. The application is the root page at **`/`**. The original landing page is preserved at **`/app/`**.
+A React + TypeScript application implementing program performance and resident concerns (Module 1), Recruitment & Match (Module 2), and Accreditation & Reviews (Module 3). The application is the root page at **`/`**. The original landing page is preserved at **`/app/`**.
+
+See [the extension guide](EXTENSION_GUIDE.md) for new routes, files, schema details, metric definitions, explicit demo assumptions, simulated NRMP/New Innovations behavior, verification commands and the stakeholder walkthrough. New screens are available from Recruitment & Match, Accreditation & Reviews, Reports and Integrations in the sidebar.
 
 ## Run
 
@@ -24,7 +26,7 @@ Filters live in URL hash query parameters. Concern edits are shared across all s
 
 ## Source data and requirement mapping
 
-`src/data/sample-data.json` is an unchanged copy of the supplied JSON. Its unused future-module entities remain intact, but are not exposed as functional modules.
+`src/data/sample-data.json` is an unchanged copy of the supplied JSON. Recruitment, review actions, follow-ups and APE entities now power Modules 2 and 3; isolated supplements live in `src/data/demo-fixtures.ts`.
 
 | Requirement | Source |
 | --- | --- |
@@ -43,7 +45,7 @@ Filters live in URL hash query parameters. Concern edits are shared across all s
 ## Source gaps and explicit demo choices
 
 - The repository initially contained only a static landing page, so the application is a new Vite/React entry alongside it, rather than a replacement.
-- The guide describes future functionality and some resident-level board/violation data. The user's more specific supplied prompt controls this iteration: program-level supplied metrics only; no workflows, APIs, AI, or future modules.
+- The current scope adds recruitment and flexible accreditation record management as described in the extension guide. Performance metrics remain imported program-level results; no resident-level board/violation calculations or production APIs are invented.
 - Gastroenterology has no board metrics. The UI shows an empty state instead of a zero rate.
 - Monitoring is derived only from the explicit `Heightened Monitoring` text in the accreditation status; remaining programs are labelled Standard. No risk thresholds are invented. Attention uses this status, active reviews and the supplied non-Compliant/Watch result labels.
 - Board charts show the latest three calendar reporting years, both annual and supplied rolling rates. Academic-year filters affect duty compliance; current monitoring/reviews and latest board metrics are explicitly labelled. Rates are not averaged across programs.
@@ -73,4 +75,4 @@ Filters live in URL hash query parameters. Concern edits are shared across all s
 
 With the dev server running, `npm run test:browser` runs the verified end-to-end journey using installed Google Chrome. It checks program drill-down, concern filtering, classification history, updated report counts, CSV download, role scope, read-only access, creation, mobile navigation, mobile search and horizontal overflow. Desktop and mobile screenshots are written to `/tmp/gme-desktop.png` and `/tmp/gme-mobile.png`.
 
-Verified: production build passes; all four data tests pass; browser acceptance journey passes; the landing page (now at `app/index.html`) and copied JSON retain their original contents.
+Additional extension checks run with `npm run test:extensions` while the dev server is running. The copied JSON and landing page retain their original contents.

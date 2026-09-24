@@ -9,7 +9,9 @@
     "preview": "vite preview --host 0.0.0.0",
     "test": "tsx --test tests/*.test.ts",
     "format": "prettier --write src/**/*.ts src/**/*.tsx src/*.tsx src/styles.css tests/*.ts tests/*.mjs vite.config.ts",
-    "test:browser": "node tests/browser-check.mjs"
+    "test:browser": "node tests/browser-check.mjs",
+    "test:extensions": "node tests/extensions-check.mjs"
+    ,"test:health": "node tests/program-health-check.mjs"
   },
   "dependencies": {
     "lucide-react": "^0.468.0",

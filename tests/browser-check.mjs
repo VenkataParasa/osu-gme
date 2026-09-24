@@ -8,8 +8,25 @@ const page = await browser.newPage({
 const errors = [];
 page.on("pageerror", (e) => errors.push(e.message));
 await page.goto("http://localhost:5173/");
-await page.getByRole("heading", { name: "Institutional overview" }).waitFor();
+await page.getByRole("heading", { name: "Institutional Overview" }).waitFor();
 await page.screenshot({ path: "/tmp/gme-desktop.png", fullPage: true });
+await page.locator("nav").getByText("Dashboard", { exact: true }).click();
+await page
+  .getByRole("heading", { name: "Program Performance Dashboard" })
+  .waitFor();
+await page
+  .getByRole("button", {
+    name: "3-year board pass rate, sort ascending",
+  })
+  .click();
+await expect(
+  page.locator(".program-performance-table tbody tr").first(),
+).toContainText("General Surgery");
+await expect(
+  page.getByRole("columnheader", { name: /3-year board pass rate/ }),
+).toHaveAttribute("aria-sort", "ascending");
+await page.locator("nav").getByText("Overview", { exact: true }).click();
+await page.getByRole("heading", { name: "Institutional Overview" }).waitFor();
 await page.getByRole("button", { name: "Review program", exact: true }).click();
 await page
   .getByRole("heading", { name: "General Surgery Residency", exact: true })
@@ -21,15 +38,22 @@ await page
   .selectOption("Reviewable");
 await expect(page.locator(".concern-table tbody tr")).toHaveCount(4);
 await page.getByRole("button", { name: "Open concern CON-0008" }).click();
-await page.getByRole("heading", { name: "Record history" }).waitFor();
+await page.getByRole("heading", { name: "Record History" }).waitFor();
 await page
   .getByLabel("Classification", { exact: true })
   .selectOption("Non-Reviewable");
 await page
   .getByLabel("Update note")
   .fill("Browser verification: reviewed supporting documentation.");
+await page.getByLabel("Supporting document").setInputFiles({
+  name: "supporting-note.pdf",
+  mimeType: "application/pdf",
+  buffer: Buffer.from("browser verification document"),
+});
 await page.getByRole("button", { name: "Save update" }).click();
 await page.getByText("Classification Change", { exact: true }).waitFor();
+await page.getByText("Document Added", { exact: true }).waitFor();
+await page.getByText("supporting-note.pdf", { exact: true }).waitFor();
 assert.ok(
   await page
     .locator(".history-change")
@@ -44,7 +68,7 @@ assert.ok(
 );
 await page.locator("nav").getByText("Reports", { exact: true }).click();
 await page
-  .getByRole("heading", { name: "Resident concern report", exact: true })
+  .getByRole("heading", { name: "Resident Concern Report", exact: true })
   .waitFor();
 await page
   .getByLabel("Classification", { exact: true })
@@ -55,8 +79,8 @@ await page.getByRole("button", { name: "Export CSV", exact: true }).click();
 const download = await downloadEvent;
 assert.equal(download.suggestedFilename(), "gme-concern-report.csv");
 await page.getByLabel("Demo user role").selectOption("USR-006");
-await page.getByRole("heading", { name: "Institutional overview" }).waitFor();
-await page.locator("nav").getByText("Program Performance").click();
+await page.getByRole("heading", { name: "Institutional Overview" }).waitFor();
+await page.locator("nav").getByText("Dashboard", { exact: true }).click();
 await expect(page.locator("tbody tr")).toHaveCount(1);
 await page.goto("http://localhost:5173/#concerns/CON-0008");
 await page

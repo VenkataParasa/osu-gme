@@ -133,4 +133,173 @@ export interface Dataset {
   ROLE: Role[];
   USER_ROLE: UserRole[];
   USER_PROGRAM_ACCESS: ProgramAccess[];
+  RECRUITMENT_CYCLE: RecruitmentCycle[];
+  APPLICANT: Applicant[];
+  MATCH_OUTCOME: MatchOutcome[];
+  ACTION_ITEM: ReviewAction[];
+  FOLLOWUP_ACTIVITY: FollowUp[];
+  APE: AnnualEvaluation[];
+}
+
+export interface RecruitmentCycle {
+  cycle_id: string;
+  program_id: string;
+  application_year: number;
+  start_date: string;
+  end_date: string;
+  status: string;
+}
+export interface Applicant {
+  applicant_id: string;
+  cycle_id: string;
+  eras_applicant_id: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  medical_school: string;
+  degree_type: string;
+  status: string;
+  created_at: string;
+  hometown_city: string;
+  hometown_state: string;
+  rank_position: number | null;
+  is_osu_student: boolean;
+}
+export interface MatchOutcome {
+  match_id: string;
+  applicant_id: string;
+  program_id: string;
+  match_result: string;
+  match_date: string;
+  position_type: string;
+  notes: string;
+}
+export interface ReviewAction {
+  action_item_id: string;
+  review_id: string;
+  assigned_to: string;
+  title: string;
+  due_date: string;
+  status: string;
+  completed_date: string | null;
+  // Optional session-entry fields; absent source values remain absent.
+  description?: string;
+  notes?: string;
+  created_at?: string;
+}
+export interface FollowUp {
+  activity_id: string;
+  review_id: string;
+  activity_date: string;
+  description: string;
+  created_by: string;
+  activity_type?: string;
+}
+export interface AnnualEvaluation {
+  ape_id: string;
+  program_id: string;
+  academic_year: string;
+  submitted_date: string | null;
+  uploaded_by: string | null;
+  status: string;
+  notes: string;
+}
+export interface TraineeSurvey {
+  id: string;
+  programId: string;
+  academicYear: string;
+  eligible: number;
+  responses: number;
+  wellbeing: number;
+  support: number;
+  environment: number;
+  surveyedAt: string;
+  source: string;
+}
+export interface OperationalMetric {
+  id: string;
+  programId: string;
+  academicYear: string;
+  traineeCount: number;
+  documentStatus: string;
+  followUpOpen: number;
+  updatedAt: string;
+  source: string;
+}
+export interface FacultyLeadership {
+  id: string;
+  programId: string;
+  personDisplayName: string;
+  role: string;
+  category: "Program Leadership" | "Core Faculty";
+  startDate: string;
+  endDate: string | null;
+  source: string;
+  notes: string;
+}
+export interface GrowthOpportunity {
+  id: string;
+  programId: string;
+  title: string;
+  category: string;
+  description: string;
+  status: string;
+  identifiedDate: string;
+  targetDate: string | null;
+  ownerLabel: string;
+  source: string;
+  notes: string;
+  createdAt: string;
+  updatedAt: string;
+}
+export interface GrowthUpdate {
+  id: string;
+  opportunityId: string;
+  at: string;
+  note: string;
+  userId: string;
+  previousStatus?: string;
+  newStatus?: string;
+}
+// Demo-only additions are isolated from the original source contract.
+export interface ActivityEntry {
+  id: string;
+  entityType: string;
+  entityId: string;
+  programId: string;
+  at: string;
+  userId: string;
+  kind: string;
+  note: string;
+  previousStatus?: string;
+  newStatus?: string;
+}
+export interface CohortParticipant {
+  studentId: string;
+  year: number;
+  outcome: "Matched" | "Unmatched" | "Pending";
+}
+export interface Lineage {
+  entity: string;
+  recordId: string;
+  programId: string;
+  sourceSystem: string;
+  sourceRecordId: string;
+  importedAt: string;
+  syncRunId: string;
+}
+export interface SyncRun {
+  id: string;
+  provider: string;
+  startedAt: string;
+  completedAt: string;
+  status: "Completed" | "Completed with warnings" | "Failed";
+  academicYear: string;
+  programIds: string[];
+  recordsReceived: number;
+  recordsCreated: number;
+  recordsUpdated: number;
+  recordsSkipped: number;
+  warnings: string[];
+  errors: string[];
 }

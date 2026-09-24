@@ -1,6 +1,6 @@
 import seed from "./sample-data.json";
 import type { Dataset, Concern, ConcernUpdate, Program } from "./types";
-export const data: Dataset = seed;
+export const data: Dataset = structuredClone(seed);
 export const classifications = ["Reviewable", "Non-Reviewable"];
 export const statuses = [...new Set(data.CONCERN_RECORD.map((c) => c.status))];
 export const shortName = (name: string) =>
@@ -62,6 +62,20 @@ export const programName = (id: string) =>
   data.PROGRAM.find((p) => p.program_id === id)?.name || id;
 export const authorName = (id: string) =>
   data.USER.find((u) => u.user_id === id)?.name || id;
+export function concernUpdateNote(
+  update: Pick<ConcernUpdate, "note" | "updated_at">,
+  referenceDate = new Date(),
+) {
+  const isFutureUpdate =
+    new Date(update.updated_at).getTime() > referenceDate.getTime();
+  const isCompletedFollowUp =
+    /^Follow-up meeting held with resident; expectations and timeline documented\.?$/i.test(
+      update.note,
+    );
+  return isFutureUpdate && isCompletedFollowUp
+    ? "Follow-up meeting is scheduled with the resident; expectations and timeline will be reviewed."
+    : update.note;
+}
 export const documents = (type: string, id: string) =>
   data.DOCUMENT.filter((d) => d.entity_type === type && d.entity_id === id);
 export const isOpen = (c: Concern) => c.status.startsWith("Open");

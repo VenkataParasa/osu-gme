@@ -26,6 +26,9 @@ import {
   ChevronDown,
   Check,
   LockKeyhole,
+  ArrowUp,
+  ArrowDown,
+  Upload,
 } from "lucide-react";
 import {
   data,
@@ -48,6 +51,7 @@ import {
   residentName,
   programName,
   authorName,
+  concernUpdateNote,
   classifications,
   statuses,
   isOpen,
@@ -57,7 +61,12 @@ import {
   canEdit,
   csvFor,
 } from "./data/repository";
-import type { Concern, ConcernUpdate, Program } from "./data/types";
+import type {
+  Concern,
+  ConcernUpdate,
+  DocumentMetadata,
+  Program,
+} from "./data/types";
 import {
   Badge,
   Card,
@@ -66,30 +75,57 @@ import {
   BoardChart,
   Documents,
 } from "./components/shared";
+import Recruitment from "./components/Recruitment";
+import Accreditation from "./components/Accreditation";
+import Integrations from "./components/Integrations";
+import ProgramHealth from "./components/ProgramHealth";
+import ReportingAnalytics from "./components/ReportingAnalytics";
+import { ReportTabs } from "./components/module-shared";
+import { useDataRevision, notifyDataChanged } from "./data/extension-store";
 
 const pages = [
   { id: "overview", label: "Overview", icon: LayoutDashboard },
-  { id: "programs", label: "Program Performance", icon: ChartNoAxesCombined },
+  { id: "health", label: "Program Health", icon: Activity },
+  { id: "analytics", label: "Reporting & Analytics", icon: FileText },
+  { id: "programs", label: "Dashboard", icon: ChartNoAxesCombined },
   { id: "concerns", label: "Resident Concerns", icon: Users },
+  { id: "recruitment", label: "Recruitment & Match", icon: GraduationCap },
+  { id: "reviews", label: "Accreditation & Reviews", icon: ShieldCheck },
   { id: "reports", label: "Reports", icon: FileText },
+  { id: "integrations", label: "Integrations", icon: SlidersHorizontal },
 ];
+type ProgramSortKey =
+  "program" | "boardRate" | "compliance" | "monitoring" | "review";
+
 function readRoute() {
   const [path, query = ""] = window.location.hash.slice(1).split("?");
   return { path: path || "overview", params: new URLSearchParams(query) };
 }
 export default function App() {
+  useDataRevision();
   const [route, setRoute] = useState(readRoute);
   const [userId, setUserId] = useState("USR-004");
   const [concerns, setConcerns] = useState<Concern[]>(() =>
-    structuredClone(data.CONCERN_RECORD)
+    structuredClone(data.CONCERN_RECORD),
   );
   const [updates, setUpdates] = useState<ConcernUpdate[]>(() =>
-    structuredClone(data.CONCERN_UPDATE)
+    structuredClone(data.CONCERN_UPDATE),
   );
+  const documentRecords = data.DOCUMENT;
+  function setDocumentRecords(
+    update: (previous: DocumentMetadata[]) => DocumentMetadata[],
+  ) {
+    data.DOCUMENT = update(data.DOCUMENT);
+    notifyDataChanged();
+  }
   const [mobile, setMobile] = useState(false);
   const [toast, setToast] = useState("");
   const [modal, setModal] = useState<"new" | "help" | null>(null);
   const [trendId, setTrendId] = useState("PRG-001");
+  const [programSort, setProgramSort] = useState<{
+    key: ProgramSortKey;
+    direction: "asc" | "desc";
+  }>({ key: "program", direction: "asc" });
   const dialog = useRef<HTMLDialogElement>(null);
   useEffect(() => {
     const listener = () => {
@@ -122,29 +158,31 @@ export default function App() {
   const scopedConcerns = filterConcerns(concerns, {}, scope);
   const filtered = filterConcerns(concerns, filters, scope);
   const visiblePrograms = scope.filter(
-    (p) => !filters.program || p.program_id === filters.program
+    (p) => !filters.program || p.program_id === filters.program,
   );
   const overviewConcerns = filterConcerns(
     concerns,
     { program: filters.program, year: filters.year },
-    scope
+    scope,
   );
   const [page, detailId] = route.path.split("/");
-  const currentPage = pages.find((p) => p.id === page);
+  const currentPage = pages.find(
+    (p) => p.id === (page === "ape" ? "reviews" : page),
+  );
   const currentUser = data.USER.find((u) => u.user_id === userId)!;
   const role = userRole(userId)!;
   const count = summary(overviewConcerns);
   const attention = visiblePrograms.filter((p) =>
-    needsAttention(p, filters.year)
+    needsAttention(p, filters.year),
   );
   function navigate(
     path: string,
-    query: Record<string, string | undefined> = {}
+    query: Record<string, string | undefined> = {},
   ) {
     const p = new URLSearchParams(
       Object.entries(query).filter(
-        (entry): entry is [string, string] => !!entry[1]
-      )
+        (entry): entry is [string, string] => !!entry[1],
+      ),
     );
     window.location.hash = `${path}${p.size ? "?" + p.toString() : ""}`;
   }
@@ -362,24 +400,99 @@ export default function App() {
       <Empty>No resident concerns match the selected filters.</Empty>
     );
   }
-  function programTable(rows: Program[]) {
+  function programTable(rows: Program[], sortable = false) {
+    function sortValue(program: Program, key: ProgramSortKey) {
+      if (key === "program") return shortName(program.name);
+      if (key === "boardRate")
+        return latestBoard(program.program_id)?.three_year_pass_rate ?? null;
+      if (key === "compliance")
+        return (
+          latestDuty(program.program_id, filters.year)?.compliance_rate ?? null
+        );
+      if (key === "monitoring") return monitoring(program);
+      return reviewStatus(program.program_id);
+    }
+    const displayRows = sortable
+      ? [...rows].sort((a, b) => {
+          const aValue = sortValue(a, programSort.key);
+          const bValue = sortValue(b, programSort.key);
+          if (aValue == null && bValue == null)
+            return a.name.localeCompare(b.name);
+          if (aValue == null) return 1;
+          if (bValue == null) return -1;
+          const comparison =
+            typeof aValue === "number" && typeof bValue === "number"
+              ? aValue - bValue
+              : String(aValue).localeCompare(String(bValue));
+          return comparison === 0
+            ? a.name.localeCompare(b.name)
+            : programSort.direction === "asc"
+              ? comparison
+              : -comparison;
+        })
+      : rows;
+    function sortHeader(label: string, key: ProgramSortKey) {
+      const active = programSort.key === key;
+      return (
+        <th
+          aria-sort={
+            sortable && active
+              ? programSort.direction === "asc"
+                ? "ascending"
+                : "descending"
+              : undefined
+          }
+        >
+          {sortable ? (
+            <button
+              className={`sort-button ${active ? "active" : ""}`}
+              onClick={() =>
+                setProgramSort((current) => ({
+                  key,
+                  direction:
+                    current.key === key && current.direction === "asc"
+                      ? "desc"
+                      : "asc",
+                }))
+              }
+              aria-label={`${label}, sort ${active && programSort.direction === "asc" ? "descending" : "ascending"}`}
+            >
+              <span>{label}</span>
+              {active ? (
+                programSort.direction === "asc" ? (
+                  <ArrowUp size={13} aria-hidden="true" />
+                ) : (
+                  <ArrowDown size={13} aria-hidden="true" />
+                )
+              ) : (
+                <span className="sort-idle" aria-hidden="true">
+                  ↕
+                </span>
+              )}
+            </button>
+          ) : (
+            label
+          )}
+        </th>
+      );
+    }
     return rows.length ? (
       <div className="table-scroll">
-        <table>
+        <table className="program-performance-table">
           <thead>
             <tr>
-              <th>Program</th>
-              <th>3-year board pass rate</th>
-              <th>Duty-hour compliance</th>
-              <th>Monitoring</th>
-              <th>Special Review</th>
+              {sortHeader("Program", "program")}
+              {sortHeader("3-year board pass rate", "boardRate")}
+              {sortHeader("Duty-hour compliance", "compliance")}
+              {sortHeader("Monitoring", "monitoring")}
+              {sortHeader("Special Review", "review")}
               <th>
                 <span className="sr-only">Details</span>
               </th>
             </tr>
           </thead>
           <tbody>
-            {rows.map((p) => {
+            {displayRows.map((p) => {
               const b = latestBoard(p.program_id),
                 d = latestDuty(p.program_id, filters.year);
               return (
@@ -454,7 +567,7 @@ export default function App() {
           className="donut"
           style={{
             background: s.total
-              ? `conic-gradient(#fe5c00 0 ${(s.reviewable / s.total) * 100}%, #000000 0 100%)`
+              ? `conic-gradient(#ff964f 0 ${(s.reviewable / s.total) * 100}%, #000000 0 100%)`
               : "#dddddd",
           }}
         >
@@ -479,7 +592,7 @@ export default function App() {
                     })
                   : filter(
                       "classification",
-                      filters.classification === label ? "" : String(label)
+                      filters.classification === label ? "" : String(label),
                     )
               }
             >
@@ -511,7 +624,7 @@ export default function App() {
       visiblePrograms[0];
     const activity = updates
       .filter((u) =>
-        overviewConcerns.some((c) => c.concern_id === u.concern_id)
+        overviewConcerns.some((c) => c.concern_id === u.concern_id),
       )
       .sort((a, b) => b.updated_at.localeCompare(a.updated_at))
       .slice(0, 4);
@@ -520,7 +633,7 @@ export default function App() {
         <div className="page-heading">
           <div>
             <div className="eyebrow">RESIDENT & PROGRAM DATA MANAGEMENT</div>
-            <h1>Institutional overview</h1>
+            <h1>Institutional Overview</h1>
             <p>
               A clear view of your programs. Better support for your residents.
             </p>
@@ -534,7 +647,7 @@ export default function App() {
         {commonFilters()}
         <div className="metrics four">
           <Metric
-            label="Total programs"
+            label="Total Programs"
             value={visiblePrograms.length}
             description={`${visiblePrograms.filter((p) => p.type === "Residency").length} residencies · ${visiblePrograms.filter((p) => p.type === "Fellowship").length} fellowships`}
             icon={<Building2 size={18} />}
@@ -546,7 +659,7 @@ export default function App() {
             }
           />
           <Metric
-            label="Heightened monitoring"
+            label="Heightened Monitoring"
             value={visiblePrograms
               .filter((p) => monitoring(p) === "Heightened")
               .length.toString()
@@ -577,7 +690,7 @@ export default function App() {
             }
           />
           <Metric
-            label="Open resident concerns"
+            label="Open Resident Concerns"
             value={count.open.toString().padStart(2, "0")}
             description={`${overviewConcerns.filter((c) => isOpen(c) && c.classification === "Reviewable").length} reviewable · ${overviewConcerns.filter((c) => isOpen(c) && c.classification === "Non-Reviewable").length} non-reviewable`}
             icon={<Users size={18} />}
@@ -618,7 +731,7 @@ export default function App() {
         )}
         <div className="overview-charts">
           <Card
-            title="Board pass performance"
+            title="Board Pass Performance"
             subtitle="Program-level trends across the latest three reporting years"
             action={
               trendProgram && (
@@ -642,7 +755,8 @@ export default function App() {
                 <div className="chart-stat">
                   <strong>
                     {percent(
-                      latestBoard(trendProgram.program_id)?.three_year_pass_rate
+                      latestBoard(trendProgram.program_id)
+                        ?.three_year_pass_rate,
                     )}
                   </strong>
                   <span>Latest 3-year rolling pass rate</span>
@@ -658,7 +772,7 @@ export default function App() {
             )}
           </Card>
           <Card
-            title="Concern snapshot"
+            title="Concern Snapshot"
             subtitle="All recorded concerns in the selected scope"
             action={<Users size={18} className="muted" />}
           >
@@ -666,7 +780,7 @@ export default function App() {
           </Card>
         </div>
         <Card
-          title="Program performance at a glance"
+          title="Program Performance at a Glance"
           subtitle="Latest board reports and received duty-hour compliance"
           action={
             <button
@@ -688,9 +802,9 @@ export default function App() {
               .sort(
                 (a, b) =>
                   Number(needsAttention(b, filters.year)) -
-                  Number(needsAttention(a, filters.year))
+                  Number(needsAttention(a, filters.year)),
               )
-              .slice(0, 4)
+              .slice(0, 4),
           )}
           <div className="card-foot">
             <span>
@@ -704,7 +818,7 @@ export default function App() {
         </Card>
         <div className="bottom-grid">
           <Card
-            title="Recent concern activity"
+            title="Recent Concern Activity"
             subtitle="Latest updates recorded in the supplied dataset"
             action={
               <button
@@ -733,11 +847,11 @@ export default function App() {
                           ·{" "}
                           {residentName(
                             concerns.find((c) => c.concern_id === u.concern_id)!
-                              .resident_id
+                              .resident_id,
                           )}
                         </span>
                       </strong>
-                      <p>{u.note}</p>
+                      <p>{concernUpdateNote(u)}</p>
                     </div>
                     <small>{date(u.updated_at)}</small>
                   </button>
@@ -752,7 +866,7 @@ export default function App() {
               <ChartNoAxesCombined size={24} />
             </span>
             <div className="eyebrow">INSTITUTIONAL REPORTING</div>
-            <h2>See the whole picture.</h2>
+            <h2>See the Whole Picture.</h2>
             <p>
               Explore resident concerns across programs, classifications, and
               academic years.
@@ -781,14 +895,14 @@ export default function App() {
         (!params.get("monitoring") ||
           monitoring(p) === params.get("monitoring")) &&
         (!params.get("review") ||
-          reviewStatus(p.program_id) === params.get("review"))
+          reviewStatus(p.program_id) === params.get("review")),
     );
     return (
       <>
         <div className="page-heading">
           <div className="heading-text">
             <div className="eyebrow">PROGRAM OVERSIGHT</div>
-            <h1>Program performance</h1>
+            <h1>Program Performance Dashboard</h1>
             <p>
               Board outcomes, imported compliance, and program monitoring in one
               place.
@@ -809,7 +923,7 @@ export default function App() {
           title="Programs"
           subtitle={`${rows.length} programs in the selected scope`}
         >
-          {programTable(rows)}
+          {programTable(rows, true)}
           <div className="card-foot">
             <span>Board rates are supplied program-level rolling values.</span>
             <span>Duty hours · New Innovations</span>
@@ -844,9 +958,35 @@ export default function App() {
           </div>
           <Badge>{monitoring(p)}</Badge>
         </div>
+        <div className="module-links">
+          <button
+            className="button"
+            onClick={() => navigate(`health/program/${p.program_id}`)}
+          >
+            Program Health
+          </button>
+          <button
+            className="button"
+            onClick={() => navigate(`recruitment/program/${p.program_id}`)}
+          >
+            Recruitment & Match
+          </button>
+          <button
+            className="button"
+            onClick={() => navigate("reviews", { program: p.program_id })}
+          >
+            Special Reviews
+          </button>
+          <button
+            className="button"
+            onClick={() => navigate(`ape/${p.program_id}`)}
+          >
+            Annual Program Evaluations
+          </button>
+        </div>
         <div className="detail-grid">
           <Card
-            title="Board pass performance"
+            title="Board Pass Performance"
             subtitle={
               b
                 ? `${b.board_type} · ${b.source}`
@@ -866,7 +1006,7 @@ export default function App() {
             )}
           </Card>
           <Card
-            title="Duty-hour compliance"
+            title="Duty-Hour Compliance"
             subtitle="Imported results · New Innovations"
           >
             <div className="compliance-stat">
@@ -916,7 +1056,12 @@ export default function App() {
               reviews(p.program_id).map((r) => (
                 <div className="review-record" key={r.review_id}>
                   <div className="row-between">
-                    <h3>{r.review_id} · Special Review</h3>
+                    <button
+                      className="text-button"
+                      onClick={() => navigate(`reviews/${r.review_id}`)}
+                    >
+                      {r.review_id} · Manage Special Review →
+                    </button>
                     <Badge>{r.status}</Badge>
                   </div>
                   <small>
@@ -925,7 +1070,15 @@ export default function App() {
                   </small>
                   <p>{r.trigger_reason}</p>
                   <p>{r.summary}</p>
-                  <Documents type="SPECIAL_REVIEW" id={r.review_id} />
+                  <Documents
+                    type="SPECIAL_REVIEW"
+                    id={r.review_id}
+                    items={documentRecords.filter(
+                      (document) =>
+                        document.entity_type === "SPECIAL_REVIEW" &&
+                        document.entity_id === r.review_id,
+                    )}
+                  />
                 </div>
               ))
             ) : (
@@ -934,7 +1087,7 @@ export default function App() {
           </div>
         </Card>
         <Card
-          title="Resident concerns"
+          title="Resident Concerns"
           subtitle={`${related.length} recorded concerns in this program`}
           action={
             <button
@@ -1016,7 +1169,7 @@ export default function App() {
         <div className="page-heading">
           <div>
             <div className="eyebrow">RESIDENT SUPPORT</div>
-            <h1>Resident concerns</h1>
+            <h1>Resident Concerns</h1>
             <p>
               Maintain a complete picture, from the first concern to the latest
               update.
@@ -1032,7 +1185,7 @@ export default function App() {
         {concernMetrics(overviewConcerns)}
         {commonFilters(true)}
         <Card
-          title="Concern records"
+          title="Concern Records"
           subtitle={`${filtered.length} results · Confidential resident information`}
           action={
             <label className="search-box">
@@ -1071,7 +1224,7 @@ export default function App() {
       .filter((u) => u.concern_id === c.concern_id)
       .sort((a, b) => a.updated_at.localeCompare(b.updated_at));
     const related = scopedConcerns.filter(
-      (r) => r.resident_id === c.resident_id && r.concern_id !== c.concern_id
+      (r) => r.resident_id === c.resident_id && r.concern_id !== c.concern_id,
     );
     return (
       <>
@@ -1099,7 +1252,7 @@ export default function App() {
         </div>
         <div className="concern-detail-grid">
           <div>
-            <Card title="Concern record" subtitle={c.summary}>
+            <Card title="Concern Record" subtitle={c.summary}>
               <div className="record-facts">
                 <div>
                   <span>Date identified</span>
@@ -1137,7 +1290,7 @@ export default function App() {
               )}
             </Card>
             <Card
-              title="Record history"
+              title="Record History"
               subtitle="Original entries and classification changes remain visible"
             >
               <ol className="timeline">
@@ -1159,7 +1312,7 @@ export default function App() {
                         <Badge>{u.new_classification}</Badge>
                       </div>
                     )}
-                    <p>{u.note}</p>
+                    <p>{concernUpdateNote(u)}</p>
                     <small>
                       {authorName(u.updated_by)} ·{" "}
                       {new Date(u.updated_at).toLocaleTimeString("en-US", {
@@ -1173,15 +1326,23 @@ export default function App() {
               {!history.length && <Empty>No updates have been recorded.</Empty>}
             </Card>
             <Card
-              title="Supporting documentation"
+              title="Supporting Documentation"
               subtitle="Document metadata from the source dataset; file contents are not included"
             >
-              <Documents type="CONCERN_RECORD" id={c.concern_id} />
+              <Documents
+                type="CONCERN_RECORD"
+                id={c.concern_id}
+                items={documentRecords.filter(
+                  (document) =>
+                    document.entity_type === "CONCERN_RECORD" &&
+                    document.entity_id === c.concern_id,
+                )}
+              />
             </Card>
           </div>
           <div>
             <Card
-              title="Update concern"
+              title="Update Concern"
               subtitle="Keep the record current and preserve its history"
             >
               {canEdit(userId, c.program_id) ? (
@@ -1215,7 +1376,7 @@ export default function App() {
                     </select>
                   </label>
                   <label>
-                    Update note <span className="required">*</span>
+                    Update Note <span className="required">*</span>
                     <textarea
                       aria-label="Update note"
                       name="note"
@@ -1224,6 +1385,24 @@ export default function App() {
                       rows={6}
                       placeholder="Describe the update and the reason for any changes…"
                     />
+                  </label>
+                  <label className="file-upload">
+                    <span>
+                      Supporting Document <small>Optional</small>
+                    </span>
+                    <span className="file-input-row">
+                      <Upload size={18} aria-hidden="true" />
+                      <input
+                        aria-label="Supporting document"
+                        name="document"
+                        type="file"
+                        accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,image/png,image/jpeg"
+                      />
+                    </span>
+                    <small>
+                      PDF, DOC, DOCX, PNG or JPG · 10 MB maximum · Metadata is
+                      retained for this demo session
+                    </small>
                   </label>
                   <p className="form-hint">
                     <ShieldCheck size={15} />
@@ -1258,6 +1437,20 @@ export default function App() {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
     try {
+      const uploadedFile = form.get("document");
+      const file = uploadedFile instanceof File ? uploadedFile : null;
+      const allowedFileTypes = new Set([
+        "application/pdf",
+        "application/msword",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "image/png",
+        "image/jpeg",
+      ]);
+      if (file && file.size > 10 * 1024 * 1024)
+        throw new Error("Supporting documents must be 10 MB or smaller.");
+      if (file && file.size > 0 && !allowedFileTypes.has(file.type))
+        throw new Error("Upload a PDF, DOC, DOCX, PNG or JPG file.");
+      const now = new Date().toISOString();
       const result = updateConcern(
         c,
         {
@@ -1265,13 +1458,48 @@ export default function App() {
           status: String(form.get("status")),
           note: String(form.get("note")),
         },
-        userId
+        userId,
+        now,
       );
+      const documentUpdates: ConcernUpdate[] = [];
+      if (file && file.size > 0) {
+        const documentId = `DOC-DEMO-${crypto.randomUUID().slice(0, 8)}`;
+        setDocumentRecords((previous) => [
+          ...previous,
+          {
+            document_id: documentId,
+            entity_type: "CONCERN_RECORD",
+            entity_id: c.concern_id,
+            file_name: file.name,
+            file_type: file.type,
+            file_size: file.size,
+            file_path: `demo://${documentId}/${encodeURIComponent(file.name)}`,
+            uploaded_by: userId,
+            uploaded_at: now,
+            source: "Demo Client Upload",
+            description: "Supporting document added with concern update",
+          },
+        ]);
+        documentUpdates.push({
+          update_id: crypto.randomUUID(),
+          concern_id: c.concern_id,
+          updated_by: userId,
+          updated_at: now,
+          update_type: "Document Added",
+          note: `Supporting document added: ${file.name}`,
+          previous_classification: null,
+          new_classification: null,
+        });
+      }
       setConcerns((prev) =>
-        prev.map((r) => (r.concern_id === c.concern_id ? result.record : r))
+        prev.map((r) => (r.concern_id === c.concern_id ? result.record : r)),
       );
-      setUpdates((prev) => [...prev, ...result.updates]);
-      setToast("Concern updated. Previous values are preserved in history.");
+      setUpdates((prev) => [...prev, ...result.updates, ...documentUpdates]);
+      setToast(
+        file && file.size > 0
+          ? "Concern and supporting document updated. History was preserved."
+          : "Concern updated. Previous values are preserved in history.",
+      );
     } catch (e) {
       setToast((e as Error).message);
     }
@@ -1284,7 +1512,8 @@ export default function App() {
           total: filtered.filter((c) => c.program_id === p.program_id).length,
           reviewable: filtered.filter(
             (c) =>
-              c.program_id === p.program_id && c.classification === "Reviewable"
+              c.program_id === p.program_id &&
+              c.classification === "Reviewable",
           ).length,
         }))
         .filter((g) => g.total)
@@ -1295,7 +1524,7 @@ export default function App() {
         <div className="page-heading">
           <div>
             <div className="eyebrow">INSTITUTIONAL REPORTING</div>
-            <h1>Resident concern report</h1>
+            <h1>Resident Concern Report</h1>
             <p>
               Explore patterns across programs and prepare a clear institutional
               picture.
@@ -1326,13 +1555,13 @@ export default function App() {
         </div>
         <div className="report-charts">
           <Card
-            title="Concerns by classification"
+            title="Concerns by Classification"
             subtitle="Select a classification to filter this report"
           >
             {distribution(filtered, false)}
           </Card>
           <Card
-            title="Concerns by program"
+            title="Concerns by Program"
             subtitle="Select a program to explore its records"
           >
             <div className="chart-legend">
@@ -1353,7 +1582,9 @@ export default function App() {
                     onClick={() =>
                       filter(
                         "program",
-                        filters.program === g.p.program_id ? "" : g.p.program_id
+                        filters.program === g.p.program_id
+                          ? ""
+                          : g.p.program_id,
                       )
                     }
                     aria-label={`${shortName(g.p.name)}: ${g.total} concerns`}
@@ -1381,7 +1612,7 @@ export default function App() {
               )}
             </div>
           </Card>
-          <Card title="Record status" subtitle="Status as currently recorded">
+          <Card title="Record Status" subtitle="Status as currently recorded">
             <div className="status-report">
               {[
                 ["Open", s.open],
@@ -1393,7 +1624,7 @@ export default function App() {
                   onClick={() =>
                     filter(
                       "status",
-                      filters.status === label ? "" : String(label)
+                      filters.status === label ? "" : String(label),
                     )
                   }
                 >
@@ -1414,7 +1645,7 @@ export default function App() {
           </Card>
         </div>
         <Card
-          title="Detailed concern report"
+          title="Detailed Concern Report"
           subtitle={`${filtered.length} records · Export includes the selected filters`}
           action={
             <button className="text-button" onClick={exportCSV}>
@@ -1432,7 +1663,7 @@ export default function App() {
     e.preventDefault();
     const form = new FormData(e.currentTarget);
     const resident = data.RESIDENT.find(
-      (r) => r.resident_id === form.get("resident")
+      (r) => r.resident_id === form.get("resident"),
     );
     if (!resident || !canEdit(userId, resident.program_id)) return;
     const now = new Date().toISOString(),
@@ -1491,9 +1722,11 @@ export default function App() {
       )}
       <aside className={`sidebar ${mobile ? "is-open" : ""}`}>
         <div className="brand">
-          <span className="brand-mark">
-            G<span>+</span>
-          </span>
+          <img
+            className="brand-logo"
+            src="/assets/osu-logo.png"
+            alt="Oklahoma State University"
+          />
           <div>
             GME<span>Central</span>
             <small>OSU CENTER FOR HEALTH SCIENCES</small>
@@ -1508,14 +1741,13 @@ export default function App() {
             <small>OSU–CHS · Tulsa, Oklahoma</small>
           </div>
         </div>
-        <span className="nav-label">WORKSPACE</span>
         <nav>
           {pages.map((p) => (
             <a
               href={`#${p.id}`}
               key={p.id}
-              className={page === p.id ? "active" : ""}
-              aria-current={page === p.id ? "page" : undefined}
+              className={currentPage?.id === p.id ? "active" : ""}
+              aria-current={currentPage?.id === p.id ? "page" : undefined}
             >
               <p.icon size={19} />
               <span>{p.label}</span>
@@ -1524,28 +1756,32 @@ export default function App() {
                   {scopedConcerns.filter(isOpen).length}
                 </span>
               )}
-              {page === p.id && <span className="nav-active-dot" />}
+              {currentPage?.id === p.id && <span className="nav-active-dot" />}
             </a>
           ))}
         </nav>
         <div className="sidebar-bottom">
-          <div className="demo-note">
+          {/* <div className="demo-note">
             <span className="demo-dot" />
             DEMONSTRATION WORKSPACE
             <p>
               Resident & Program
               <br />
-              Data Management
+              Recruitment & Reviews
             </p>
-            <small>Fictional data · Module 01</small>
-          </div>
+            <small>Fictional data · Modules 01–03</small>
+          </div> */}
           <button className="help-button" onClick={() => setModal("help")}>
             <CircleHelp size={18} />
             Help & demo guide
             <ArrowUpRight size={15} />
           </button>
           <div className="sidebar-footer">
-            <span className="osu-text">OSU</span>
+            <img
+              className="footer-logo"
+              src="/assets/osu-logo.png"
+              alt="Oklahoma State University"
+            />
             <span>
               Center for
               <br />
@@ -1593,8 +1829,8 @@ export default function App() {
               >
                 {data.USER.filter((u) =>
                   ["ROL-01", "ROL-02", "ROL-03", "ROL-04"].includes(
-                    userRole(u.user_id)?.role_id || ""
-                  )
+                    userRole(u.user_id)?.role_id || "",
+                  ),
                 ).map((u) => (
                   <option key={u.user_id} value={u.user_id}>
                     {userRole(u.user_id)?.role_name} · {u.name}
@@ -1605,6 +1841,9 @@ export default function App() {
           </div>
         </header>
         <main id="main-content" tabIndex={-1}>
+          {page === "reports" && (
+            <ReportTabs current={detailId || "concerns"} navigate={navigate} />
+          )}
           {page === "overview" ? (
             overview()
           ) : page === "programs" ? (
@@ -1620,7 +1859,75 @@ export default function App() {
               concernsPage()
             )
           ) : page === "reports" ? (
-            reportsPage()
+            detailId === "recruitment" ? (
+              <Recruitment
+                userId={userId}
+                path={route.path}
+                params={params}
+                navigate={navigate}
+                toast={setToast}
+              />
+            ) : detailId === "reviews" || detailId === "ape" ? (
+              <Accreditation
+                key={route.path}
+                userId={userId}
+                path={route.path}
+                params={params}
+                navigate={navigate}
+                toast={setToast}
+              />
+            ) : detailId === "health" ? (
+              <ProgramHealth
+                userId={userId}
+                path={route.path}
+                params={params}
+                navigate={navigate}
+                toast={setToast}
+              />
+            ) : (
+              reportsPage()
+            )
+          ) : page === "recruitment" ? (
+            <Recruitment
+              userId={userId}
+              path={route.path}
+              params={params}
+              navigate={navigate}
+              toast={setToast}
+            />
+          ) : page === "health" ? (
+            <ProgramHealth
+              userId={userId}
+              path={route.path}
+              params={params}
+              navigate={navigate}
+              toast={setToast}
+            />
+          ) : page === "analytics" ? (
+            <ReportingAnalytics
+              userId={userId}
+              path={route.path}
+              params={params}
+              navigate={navigate}
+              toast={setToast}
+            />
+          ) : page === "reviews" || page === "ape" ? (
+            <Accreditation
+              key={route.path}
+              userId={userId}
+              path={route.path}
+              params={params}
+              navigate={navigate}
+              toast={setToast}
+            />
+          ) : page === "integrations" ? (
+            <Integrations
+              userId={userId}
+              path={route.path}
+              params={params}
+              navigate={navigate}
+              toast={setToast}
+            />
           ) : (
             <Empty>
               Page not found. Use the workspace navigation to continue.
@@ -1687,7 +1994,7 @@ export default function App() {
                 </option>
                 {data.RESIDENT.filter(
                   (r) =>
-                    r.status !== "Graduated" && canEdit(userId, r.program_id)
+                    r.status !== "Graduated" && canEdit(userId, r.program_id),
                 ).map((r) => (
                   <option key={r.resident_id} value={r.resident_id}>
                     {r.full_name} · {shortName(programName(r.program_id))}

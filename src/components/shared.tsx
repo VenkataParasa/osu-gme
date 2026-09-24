@@ -10,6 +10,7 @@ import {
   Line,
 } from "recharts";
 import { boardTrend, date, documents, percent } from "../data/repository";
+import type { DocumentMetadata } from "../data/types";
 export function Badge({
   children,
   tone,
@@ -170,7 +171,7 @@ export function BoardChart({ id }: { id: string }) {
             <Line
               type="linear"
               dataKey="rolling"
-              stroke="#fe5c00"
+              stroke="#ff964f"
               strokeWidth={4}
               dot={{ r: 5, strokeWidth: 3, fill: "white" }}
               activeDot={{ r: 7, strokeWidth: 3 }}
@@ -216,8 +217,16 @@ export function BoardChart({ id }: { id: string }) {
     </>
   );
 }
-export function Documents({ type, id }: { type: string; id: string }) {
-  const docs = documents(type, id);
+export function Documents({
+  type,
+  id,
+  items,
+}: {
+  type: string;
+  id: string;
+  items?: DocumentMetadata[];
+}) {
+  const docs = items ?? documents(type, id);
   return (
     <div className="documents">
       {docs.length ? (

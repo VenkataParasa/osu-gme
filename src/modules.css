@@ -1,0 +1,351 @@
+/* Extension modules reuse the existing shell, palette, cards and typography. */
+.module-tabs {
+  display: flex;
+  gap: 6px;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 24px;
+  overflow: auto;
+  padding: 0 0 8px;
+}
+.module-tabs button {
+  white-space: nowrap;
+  padding: 10px 14px;
+  border-radius: 5px;
+  font-size: 12px;
+  color: #626b64;
+}
+.module-tabs button.selected {
+  background: #fff1e8;
+  color: #773905;
+  box-shadow: inset 0 -2px var(--orange);
+  font-weight: 650;
+}
+.module-filters {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  margin-bottom: 22px;
+}
+.module-filter {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 10px;
+  color: #58655b;
+}
+.module-filter select {
+  padding: 9px 30px 9px 11px;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  background: white;
+  font-size: 12px;
+  max-width: 270px;
+}
+.module-notice {
+  border: 1px solid #e7d4c1;
+  background: #fff8f1;
+  border-radius: 6px;
+  color: #7a5839;
+  font-size: 11px;
+  line-height: 1.8;
+  padding: 13px 17px;
+  margin-bottom: 22px;
+}
+.module-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 14px;
+  margin: 0 0 23px;
+}
+.module-stat {
+  padding: 20px;
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+.module-stat > span {
+  font-size: 11px;
+  color: #626962;
+}
+.module-stat strong {
+  font-size: 25px;
+  font-weight: 600;
+  letter-spacing: -0.6px;
+}
+.module-stat small {
+  font-size: 10px;
+}
+.card > .module-stats {
+  margin: 0 20px 22px;
+}
+.module-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+}
+.module-grid.two {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.module-grid td {
+  padding: 12px;
+  white-space: normal;
+  font-size: 11px;
+}
+.module-grid th {
+  padding: 12px;
+}
+.module-chart {
+  height: 270px;
+  padding: 12px 25px 15px 6px;
+  font-size: 11px;
+}
+.module-bars {
+  padding: 0 20px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.module-bars button {
+  display: grid;
+  grid-template-columns: minmax(75px, 1fr) 1fr 25px;
+  align-items: center;
+  gap: 10px;
+  text-align: left;
+  font-size: 11px;
+  cursor: default;
+}
+.module-bars button:not(:disabled) {
+  cursor: pointer;
+}
+.module-bars button > div {
+  height: 10px;
+  background: #efefed;
+  border-radius: 3px;
+}
+.module-bars i {
+  display: block;
+  height: 100%;
+  background: #d7824f;
+  border-radius: 3px;
+}
+.module-bars strong {
+  text-align: right;
+}
+.module-form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  padding: 0 22px 23px;
+}
+.module-form label,
+.module-search label {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  font-size: 11px;
+  font-weight: 550;
+}
+.module-form input,
+.module-form select,
+.module-form textarea,
+.module-search input {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid var(--line);
+  padding: 10px;
+  border-radius: 5px;
+  background: white;
+  font-size: 12px;
+}
+.module-form textarea {
+  min-height: 90px;
+  resize: vertical;
+}
+.module-form input[type="file"] {
+  font-size: 11px;
+}
+.module-form button {
+  align-self: flex-start;
+}
+.module-search {
+  padding: 0 22px 20px;
+  max-width: 350px;
+}
+.module-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 13px;
+  margin: 0 0 24px;
+}
+.card > .module-links {
+  padding: 0 22px;
+}
+.module-timeline {
+  list-style: none;
+  padding: 0 24px;
+  margin: 0 0 20px;
+}
+.module-timeline li {
+  border-left: 2px solid #e3d3c2;
+  padding: 0 0 20px 16px;
+}
+.module-timeline strong {
+  font-size: 12px;
+}
+.module-timeline small {
+  display: block;
+  margin-top: 7px;
+}
+.module-timeline p {
+  font-size: 12px;
+  line-height: 1.8;
+  margin-top: 9px;
+  color: #526052;
+}
+.module-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.badge.danger {
+  background: #fbeceb;
+  color: #8f302c;
+  border: 1px solid #e5b5b0;
+}
+.integration-content {
+  padding: 0 22px 22px;
+}
+.integration-content dl {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin: 20px 0;
+}
+.integration-content dl > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  font-size: 11px;
+}
+.integration-content dt {
+  color: #626962;
+}
+.integration-content dd {
+  margin: 0;
+  text-align: right;
+}
+.integration-content .form-hint {
+  margin-top: 14px;
+}
+.sync-progress {
+  margin: 18px 0;
+  font-size: 12px;
+}
+.sync-progress progress {
+  width: 100%;
+  accent-color: var(--orange);
+}
+.sync-progress p {
+  margin-top: 9px;
+}
+.button:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+.sidebar {
+  overflow-y: auto;
+}
+.sidebar-bottom {
+  padding-top: 25px;
+}
+.sidebar nav {
+  flex-shrink: 0;
+}
+@media (max-width: 1150px) {
+  .module-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .module-grid.two {
+    grid-template-columns: 1fr;
+  }
+  .module-filter select {
+    max-width: 230px;
+  }
+}
+@media (max-width: 760px) {
+  .topbar .breadcrumb {
+    min-width: 0;
+    overflow: hidden;
+  }
+  .topbar .breadcrumb > span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .topbar .header-right {
+    flex-shrink: 0;
+  }
+  .module-grid,
+  .module-grid.two {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+  .module-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .module-filter {
+    flex: 1;
+    min-width: 130px;
+  }
+  .module-filter select {
+    max-width: 100%;
+    width: 100%;
+  }
+  .module-stat {
+    padding: 16px;
+  }
+  .module-chart {
+    height: 230px;
+    padding-right: 10px;
+  }
+  .module-notice {
+    font-size: 10px;
+  }
+  .module-tabs button {
+    font-size: 11px;
+  }
+  .module-links .button {
+    font-size: 10px;
+  }
+  .module-form {
+    padding: 0 17px 20px;
+  }
+}
+@media print {
+  .module-tabs,
+  .module-filters,
+  .module-form,
+  .module-links,
+  .integration-content button {
+    display: none !important;
+  }
+  .module-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .module-chart {
+    break-inside: avoid;
+  }
+}
+
+.health-cell {
+  padding: 0;
+  background: transparent;
+}
+.health-cell .badge {
+  cursor: pointer;
+}

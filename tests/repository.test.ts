@@ -11,6 +11,7 @@ import {
   csvFor,
   academicYear,
   canEdit,
+  concernUpdateNote,
 } from "../src/data/repository";
 test("source metrics and concern states retain their supplied meaning", () => {
   assert.equal(data.PROGRAM.length, 10);
@@ -89,4 +90,19 @@ test("academic-year filtering uses July boundary and CSV quotes embedded text", 
   ]);
   assert.ok(csv.includes('"a ""quoted"", summary"'));
   assert.ok(csv.includes("Family Medicine Residency"));
+});
+test("future follow-up notes use scheduled wording without mutating source data", () => {
+  const futureUpdate = data.CONCERN_UPDATE.find(
+    (update) => update.update_id === "CUP-0029",
+  )!;
+  const originalNote = futureUpdate.note;
+  assert.equal(
+    concernUpdateNote(futureUpdate, new Date("2026-09-24T00:00:00")),
+    "Follow-up meeting is scheduled with the resident; expectations and timeline will be reviewed.",
+  );
+  assert.equal(
+    concernUpdateNote(futureUpdate, new Date("2026-10-05T00:00:00")),
+    originalNote,
+  );
+  assert.equal(futureUpdate.note, originalNote);
 });
