@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import type { FormEvent, ReactNode } from "react";
 import {
   LayoutDashboard,
@@ -75,14 +75,17 @@ import {
   BoardChart,
   Documents,
 } from "./components/shared";
-import Recruitment from "./components/Recruitment";
-import Accreditation from "./components/Accreditation";
-import Integrations from "./components/Integrations";
-import ProgramHealth from "./components/ProgramHealth";
-import ReportingAnalytics from "./components/ReportingAnalytics";
-import DutyHours from "./components/DutyHours";
 import { ReportTabs } from "./components/module-shared";
 import { useDataRevision, notifyDataChanged } from "./data/extension-store";
+
+// Route modules are fetched only when the user opens that area. This keeps
+// charts and large report UI out of the Overview startup path.
+const Recruitment = lazy(() => import("./components/Recruitment"));
+const Accreditation = lazy(() => import("./components/Accreditation"));
+const Integrations = lazy(() => import("./components/Integrations"));
+const ProgramHealth = lazy(() => import("./components/ProgramHealth"));
+const ReportingAnalytics = lazy(() => import("./components/ReportingAnalytics"));
+const DutyHours = lazy(() => import("./components/DutyHours"));
 
 const pages = [
   { id: "overview", label: "Overview", icon: LayoutDashboard },
@@ -108,14 +111,14 @@ export default function App() {
   const [route, setRoute] = useState(readRoute);
   const [userId, setUserId] = useState("USR-004");
   const [concerns, setConcerns] = useState<Concern[]>(() =>
-    structuredClone(data.CONCERN_RECORD),
+    structuredClone(data.CONCERN_RECORD)
   );
   const [updates, setUpdates] = useState<ConcernUpdate[]>(() =>
-    structuredClone(data.CONCERN_UPDATE),
+    structuredClone(data.CONCERN_UPDATE)
   );
   const documentRecords = data.DOCUMENT;
   function setDocumentRecords(
-    update: (previous: DocumentMetadata[]) => DocumentMetadata[],
+    update: (previous: DocumentMetadata[]) => DocumentMetadata[]
   ) {
     data.DOCUMENT = update(data.DOCUMENT);
     notifyDataChanged();
@@ -160,31 +163,31 @@ export default function App() {
   const scopedConcerns = filterConcerns(concerns, {}, scope);
   const filtered = filterConcerns(concerns, filters, scope);
   const visiblePrograms = scope.filter(
-    (p) => !filters.program || p.program_id === filters.program,
+    (p) => !filters.program || p.program_id === filters.program
   );
   const overviewConcerns = filterConcerns(
     concerns,
     { program: filters.program, year: filters.year },
-    scope,
+    scope
   );
   const [page, detailId] = route.path.split("/");
   const currentPage = pages.find(
-    (p) => p.id === (page === "ape" ? "reviews" : page),
+    (p) => p.id === (page === "ape" ? "reviews" : page)
   );
   const currentUser = data.USER.find((u) => u.user_id === userId)!;
   const role = userRole(userId)!;
   const count = summary(overviewConcerns);
   const attention = visiblePrograms.filter((p) =>
-    needsAttention(p, filters.year),
+    needsAttention(p, filters.year)
   );
   function navigate(
     path: string,
-    query: Record<string, string | undefined> = {},
+    query: Record<string, string | undefined> = {}
   ) {
     const p = new URLSearchParams(
       Object.entries(query).filter(
-        (entry): entry is [string, string] => !!entry[1],
-      ),
+        (entry): entry is [string, string] => !!entry[1]
+      )
     );
     window.location.hash = `${path}${p.size ? "?" + p.toString() : ""}`;
   }
@@ -594,7 +597,7 @@ export default function App() {
                     })
                   : filter(
                       "classification",
-                      filters.classification === label ? "" : String(label),
+                      filters.classification === label ? "" : String(label)
                     )
               }
             >
@@ -626,7 +629,7 @@ export default function App() {
       visiblePrograms[0];
     const activity = updates
       .filter((u) =>
-        overviewConcerns.some((c) => c.concern_id === u.concern_id),
+        overviewConcerns.some((c) => c.concern_id === u.concern_id)
       )
       .sort((a, b) => b.updated_at.localeCompare(a.updated_at))
       .slice(0, 4);
@@ -757,8 +760,7 @@ export default function App() {
                 <div className="chart-stat">
                   <strong>
                     {percent(
-                      latestBoard(trendProgram.program_id)
-                        ?.three_year_pass_rate,
+                      latestBoard(trendProgram.program_id)?.three_year_pass_rate
                     )}
                   </strong>
                   <span>Latest 3-year rolling pass rate</span>
@@ -804,9 +806,9 @@ export default function App() {
               .sort(
                 (a, b) =>
                   Number(needsAttention(b, filters.year)) -
-                  Number(needsAttention(a, filters.year)),
+                  Number(needsAttention(a, filters.year))
               )
-              .slice(0, 4),
+              .slice(0, 4)
           )}
           <div className="card-foot">
             <span>
@@ -849,7 +851,7 @@ export default function App() {
                           ·{" "}
                           {residentName(
                             concerns.find((c) => c.concern_id === u.concern_id)!
-                              .resident_id,
+                              .resident_id
                           )}
                         </span>
                       </strong>
@@ -897,7 +899,7 @@ export default function App() {
         (!params.get("monitoring") ||
           monitoring(p) === params.get("monitoring")) &&
         (!params.get("review") ||
-          reviewStatus(p.program_id) === params.get("review")),
+          reviewStatus(p.program_id) === params.get("review"))
     );
     return (
       <>
@@ -1078,7 +1080,7 @@ export default function App() {
                     items={documentRecords.filter(
                       (document) =>
                         document.entity_type === "SPECIAL_REVIEW" &&
-                        document.entity_id === r.review_id,
+                        document.entity_id === r.review_id
                     )}
                   />
                 </div>
@@ -1226,7 +1228,7 @@ export default function App() {
       .filter((u) => u.concern_id === c.concern_id)
       .sort((a, b) => a.updated_at.localeCompare(b.updated_at));
     const related = scopedConcerns.filter(
-      (r) => r.resident_id === c.resident_id && r.concern_id !== c.concern_id,
+      (r) => r.resident_id === c.resident_id && r.concern_id !== c.concern_id
     );
     return (
       <>
@@ -1337,7 +1339,7 @@ export default function App() {
                 items={documentRecords.filter(
                   (document) =>
                     document.entity_type === "CONCERN_RECORD" &&
-                    document.entity_id === c.concern_id,
+                    document.entity_id === c.concern_id
                 )}
               />
             </Card>
@@ -1461,7 +1463,7 @@ export default function App() {
           note: String(form.get("note")),
         },
         userId,
-        now,
+        now
       );
       const documentUpdates: ConcernUpdate[] = [];
       if (file && file.size > 0) {
@@ -1494,13 +1496,13 @@ export default function App() {
         });
       }
       setConcerns((prev) =>
-        prev.map((r) => (r.concern_id === c.concern_id ? result.record : r)),
+        prev.map((r) => (r.concern_id === c.concern_id ? result.record : r))
       );
       setUpdates((prev) => [...prev, ...result.updates, ...documentUpdates]);
       setToast(
         file && file.size > 0
           ? "Concern and supporting document updated. History was preserved."
-          : "Concern updated. Previous values are preserved in history.",
+          : "Concern updated. Previous values are preserved in history."
       );
     } catch (e) {
       setToast((e as Error).message);
@@ -1514,8 +1516,7 @@ export default function App() {
           total: filtered.filter((c) => c.program_id === p.program_id).length,
           reviewable: filtered.filter(
             (c) =>
-              c.program_id === p.program_id &&
-              c.classification === "Reviewable",
+              c.program_id === p.program_id && c.classification === "Reviewable"
           ).length,
         }))
         .filter((g) => g.total)
@@ -1584,9 +1585,7 @@ export default function App() {
                     onClick={() =>
                       filter(
                         "program",
-                        filters.program === g.p.program_id
-                          ? ""
-                          : g.p.program_id,
+                        filters.program === g.p.program_id ? "" : g.p.program_id
                       )
                     }
                     aria-label={`${shortName(g.p.name)}: ${g.total} concerns`}
@@ -1626,7 +1625,7 @@ export default function App() {
                   onClick={() =>
                     filter(
                       "status",
-                      filters.status === label ? "" : String(label),
+                      filters.status === label ? "" : String(label)
                     )
                   }
                 >
@@ -1665,7 +1664,7 @@ export default function App() {
     e.preventDefault();
     const form = new FormData(e.currentTarget);
     const resident = data.RESIDENT.find(
-      (r) => r.resident_id === form.get("resident"),
+      (r) => r.resident_id === form.get("resident")
     );
     if (!resident || !canEdit(userId, resident.program_id)) return;
     const now = new Date().toISOString(),
@@ -1806,7 +1805,7 @@ export default function App() {
               className="breadcrumb-link"
               onClick={() => navigate("overview")}
             >
-              Workspace
+              Overview
             </button>
             <ChevronRight size={13} />
             <button
@@ -1848,8 +1847,8 @@ export default function App() {
               >
                 {data.USER.filter((u) =>
                   ["ROL-01", "ROL-02", "ROL-03", "ROL-04"].includes(
-                    userRole(u.user_id)?.role_id || "",
-                  ),
+                    userRole(u.user_id)?.role_id || ""
+                  )
                 ).map((u) => (
                   <option key={u.user_id} value={u.user_id}>
                     {userRole(u.user_id)?.role_name} · {u.name}
@@ -1863,6 +1862,13 @@ export default function App() {
           {page === "reports" && (
             <ReportTabs current={detailId || "concerns"} navigate={navigate} />
           )}
+          <Suspense
+            fallback={
+              <div className="module-loading" role="status">
+                Loading module…
+              </div>
+            }
+          >
           {page === "overview" ? (
             overview()
           ) : page === "programs" ? (
@@ -1956,10 +1962,9 @@ export default function App() {
               toast={setToast}
             />
           ) : (
-            <Empty>
-              Page not found. Use the workspace navigation to continue.
-            </Empty>
+            <Empty>Page not found. Use the navigation to continue.</Empty>
           )}
+          </Suspense>
           <footer className="main-footer">
             <span>
               GME Central <i /> OSU Center for Health Sciences
@@ -2021,7 +2026,7 @@ export default function App() {
                 </option>
                 {data.RESIDENT.filter(
                   (r) =>
-                    r.status !== "Graduated" && canEdit(userId, r.program_id),
+                    r.status !== "Graduated" && canEdit(userId, r.program_id)
                 ).map((r) => (
                   <option key={r.resident_id} value={r.resident_id}>
                     {r.full_name} · {shortName(programName(r.program_id))}

@@ -1,4 +1,4 @@
-import { Children, Fragment, isValidElement, useMemo, useState } from "react";
+import { Children, Fragment, isValidElement, useEffect, useMemo, useState } from "react";
 import type { ReactNode, FormEvent, ReactElement } from "react";
 import { Download, FileText } from "lucide-react";
 import { Card, Empty, Documents } from "./shared";
@@ -114,15 +114,18 @@ export function DataTable({
   headers,
   children,
   empty,
+  pageSize = 50,
 }: {
   headers: string[];
   children: ReactNode;
   empty?: boolean;
+  pageSize?: number;
 }) {
   const [sort, setSort] = useState<{
     column: number;
     direction: "asc" | "desc";
   } | null>(null);
+  const [page, setPage] = useState(0);
   function rowsOf(node: ReactNode): ReactElement[] {
     return Children.toArray(node).flatMap((child) => {
       if (!isValidElement<{ children?: ReactNode }>(child)) return [];
@@ -139,7 +142,7 @@ export function DataTable({
       : "";
   }
   const rows = useMemo(() => rowsOf(children), [children]);
-  const shown = useMemo(() => {
+  const sortedRows = useMemo(() => {
     if (!sort) return rows;
     return [...rows].sort((a, b) => {
       const cells = Children.toArray(
@@ -162,12 +165,18 @@ export function DataTable({
       return sort.direction === "asc" ? comparison : -comparison;
     });
   }, [rows, sort]);
+  const pageCount = Math.max(1, Math.ceil(sortedRows.length / pageSize));
+  useEffect(() => setPage((current) => Math.min(current, pageCount - 1)), [pageCount]);
+  const shown = sortedRows.slice(page * pageSize, (page + 1) * pageSize);
   const toggleSort = (column: number) =>
-    setSort((current) =>
-      current?.column === column
-        ? { column, direction: current.direction === "asc" ? "desc" : "asc" }
-        : { column, direction: "asc" },
-    );
+    {
+      setPage(0);
+      setSort((current) =>
+        current?.column === column
+          ? { column, direction: current.direction === "asc" ? "desc" : "asc" }
+          : { column, direction: "asc" },
+      );
+    };
   return empty ? (
     <Empty>No records match the selected filters.</Empty>
   ) : (
@@ -207,6 +216,22 @@ export function DataTable({
           <tbody>{shown}</tbody>
         </table>
       </div>
+      {sortedRows.length > pageSize && (
+        <nav className="table-pagination" aria-label="Table pages">
+          <span>
+            Showing {page * pageSize + 1}–{Math.min((page + 1) * pageSize, sortedRows.length)} of {sortedRows.length}
+          </span>
+          <div>
+            <button disabled={page === 0} onClick={() => setPage(page - 1)}>
+              Previous
+            </button>
+            <span>Page {page + 1} of {pageCount}</span>
+            <button disabled={page === pageCount - 1} onClick={() => setPage(page + 1)}>
+              Next
+            </button>
+          </div>
+        </nav>
+      )}
     </>
   );
 }

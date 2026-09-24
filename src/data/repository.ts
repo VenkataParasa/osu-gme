@@ -1,8 +1,30 @@
-import seed from "./sample-data-v2.json";
 import type { Dataset, Concern, ConcernUpdate, Program } from "./types";
-export const data: Dataset = structuredClone(seed);
+
+// The demo dataset is intentionally kept out of the JavaScript bundle. It is
+// fetched after the small application shell has painted, and retained as one
+// mutable in-memory store for the demo workflows.
+export const data = {} as Dataset;
+let datasetRequest: Promise<Dataset> | undefined;
+
+export async function loadMockData(): Promise<Dataset> {
+  if (!datasetRequest) {
+    const url = new URL("data/gme-demo-v2.json", document.baseURI).toString();
+    datasetRequest = fetch(url)
+      .then((response) => {
+        if (!response.ok) throw new Error(`Unable to load demonstration data (${response.status}).`);
+        return response.json() as Promise<Dataset>;
+      })
+      .then((dataset) => {
+        Object.assign(data, dataset);
+        refreshDerivedData();
+        return data;
+      });
+  }
+  return datasetRequest;
+}
+
 export const classifications = ["Reviewable", "Non-Reviewable"];
-export const statuses = [...new Set(data.CONCERN_RECORD.map((c) => c.status))];
+export const statuses: string[] = [];
 export const shortName = (name: string) =>
   name.replace(/ Residency| Fellowship/g, "");
 export const percent = (v?: number | null) =>
@@ -18,14 +40,19 @@ export function academicYear(value: string) {
   const y = Number(value.slice(0, 4)) - (Number(value.slice(5, 7)) < 7 ? 1 : 0);
   return `${y}-${String(y + 1).slice(2)}`;
 }
-export const years = [
-  ...new Set([
-    ...data.DUTY_HOUR_COMPLIANCE.map((d) => d.academic_period.slice(0, 7)),
-    ...data.CONCERN_RECORD.map((c) => academicYear(c.identified_date)),
-  ]),
-]
-  .sort()
-  .reverse();
+export const years: string[] = [];
+function refreshDerivedData() {
+  statuses.splice(0, statuses.length, ...new Set(data.CONCERN_RECORD.map((c) => c.status)));
+  years.splice(
+    0,
+    years.length,
+    ...new Set([
+      ...data.DUTY_HOUR_COMPLIANCE.map((d) => d.academic_period.slice(0, 7)),
+      ...data.CONCERN_RECORD.map((c) => academicYear(c.identified_date)),
+    ]),
+  );
+  years.sort().reverse();
+}
 export function boardTrend(id: string) {
   return data.BOARD_PASS_METRIC.filter((b) => b.program_id === id)
     .sort((a, b) => a.reporting_year - b.reporting_year)

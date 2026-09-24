@@ -25,6 +25,31 @@
 body {
   margin: 0;
 }
+.app-loading {
+  min-height: 100vh;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 10px;
+  color: var(--ink);
+  background: #f4f4f4;
+}
+.app-loading-mark {
+  padding: 8px 12px;
+  border-radius: 5px;
+  color: #fff;
+  font-weight: 800;
+  letter-spacing: -1px;
+  background: var(--orange-dark);
+}
+.app-loading small { color: var(--muted); }
+.app-loading-error { text-align: center; padding: 24px; }
+.module-loading {
+  min-height: 260px;
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+}
 button,
 input,
 select,
