@@ -92,7 +92,7 @@ export default function Recruitment({
     "Applicants",
     "Ranked",
     "Matched",
-    "Positions · demo",
+    "Positions Offered",
     "Unfilled · recorded",
     "Fill Rate · recorded",
   ];
@@ -279,9 +279,7 @@ export default function Recruitment({
         </button>
       </div>
       <div className="module-notice">
-        2027 records are a small fictional future-cycle scenario. Annual
-        position counts are supplemental demo fixtures; recorded fill rates may
-        be partial. “Not Matched to Program” does not mean unmatched nationally.
+        Positions are supplied by recruitment cycles. Open cycles may have no recorded outcomes yet. “Not Matched to Program” does not mean unmatched nationally. Historical pool and mix comparisons are available in Reporting & Analytics → Recruitment Trends.
       </div>
       <Stats
         items={[
@@ -426,16 +424,16 @@ export default function Recruitment({
           )}
           {institutional && (
             <Card
-              title="OSU Student Match Performance — Demo Cohort"
-              subtitle="Separate fictional participating-student cohort · institution-wide, independent of program/type/outcome filters"
+              title="OSU-COM Student Match Performance"
+              subtitle="Supplied OSU-COM class Match list · institution-wide, independent of program/type/outcome filters"
             >
               <Stats
                 items={[
                   {
                     label: "Participating OSU Students",
-                    value: cohort.participating,
+                    value: cohort.participating || 'Not recorded',
                   },
-                  { label: "Matched OSU Students", value: cohort.matched },
+                  { label: "Matched OSU Students", value: cohort.participating ? cohort.matched : 'Not recorded' },
                   {
                     label: "OSU Student Match Rate",
                     value: percent(cohort.rate),
@@ -443,8 +441,7 @@ export default function Recruitment({
                 ]}
               />
               <div className="card-foot">
-                This is a complete supplemental demo cohort, not the set of OSU
-                applicants to these programs. Selected Match year: {year}.
+                Participating students and matched totals come from the supplied class Match list. Selected Match year: {year}.
               </div>
             </Card>
           )}
@@ -563,8 +560,8 @@ export default function Recruitment({
           </Card>
           {institutional && (
             <Card
-              title="OSU Student Match Trend — Demo Cohort"
-              subtitle="Separate supplemental cohort; institution-wide population for each year"
+              title="OSU-COM Student Match Trend"
+              subtitle="Supplied class Match lists; institution-wide population for each year"
               action={
                 <ExportButton
                   name="osu-demo-cohort"

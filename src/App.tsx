@@ -80,6 +80,7 @@ import Accreditation from "./components/Accreditation";
 import Integrations from "./components/Integrations";
 import ProgramHealth from "./components/ProgramHealth";
 import ReportingAnalytics from "./components/ReportingAnalytics";
+import DutyHours from "./components/DutyHours";
 import { ReportTabs } from "./components/module-shared";
 import { useDataRevision, notifyDataChanged } from "./data/extension-store";
 
@@ -87,6 +88,7 @@ const pages = [
   { id: "overview", label: "Overview", icon: LayoutDashboard },
   { id: "health", label: "Program Health", icon: Activity },
   { id: "analytics", label: "Reporting & Analytics", icon: FileText },
+  { id: "duty-hours", label: "Duty-Hour Compliance", icon: Clock3 },
   { id: "programs", label: "Dashboard", icon: ChartNoAxesCombined },
   { id: "concerns", label: "Resident Concerns", icon: Users },
   { id: "recruitment", label: "Recruitment & Match", icon: GraduationCap },
@@ -1800,13 +1802,30 @@ export default function App() {
             <Menu size={22} />
           </button>
           <div className="breadcrumb">
-            Workspace
+            <button
+              className="breadcrumb-link"
+              onClick={() => navigate("overview")}
+            >
+              Workspace
+            </button>
             <ChevronRight size={13} />
-            <span>{currentPage?.label || "Overview"}</span>
+            <button
+              className="breadcrumb-link"
+              onClick={() => navigate(currentPage?.id || "overview")}
+            >
+              {currentPage?.label || "Overview"}
+            </button>
             {detailId && (
               <>
                 <ChevronRight size={13} />
-                <span>Details</span>
+                <button
+                  className="breadcrumb-link"
+                  onClick={() =>
+                    navigate(route.path, Object.fromEntries(params))
+                  }
+                >
+                  Details
+                </button>
               </>
             )}
           </div>
@@ -1905,6 +1924,14 @@ export default function App() {
             />
           ) : page === "analytics" ? (
             <ReportingAnalytics
+              userId={userId}
+              path={route.path}
+              params={params}
+              navigate={navigate}
+              toast={setToast}
+            />
+          ) : page === "duty-hours" ? (
+            <DutyHours
               userId={userId}
               path={route.path}
               params={params}

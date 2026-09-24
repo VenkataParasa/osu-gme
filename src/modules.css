@@ -349,3 +349,25 @@
 .health-cell .badge {
   cursor: pointer;
 }
+.table-sort {
+  font: inherit;
+  font-weight: inherit;
+  color: inherit;
+  text-align: left;
+  padding: 0;
+  white-space: nowrap;
+}
+.table-sort span {
+  color: #9a7054;
+  font-size: 10px;
+}
+.breadcrumb-link {
+  font: inherit;
+  color: inherit;
+  padding: 0;
+  text-align: left;
+}
+.breadcrumb-link:hover {
+  text-decoration: underline;
+  color: var(--orange);
+}

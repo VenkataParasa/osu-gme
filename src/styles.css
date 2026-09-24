@@ -218,7 +218,7 @@ nav a.active svg {
   color: #e4bf87;
 }
 nav .nav-count {
-  background: #ffffff0d;
+  background: white;
   border: 1px solid #ffffff0a;
   padding: 1px 6px;
   font-size: 10px;
@@ -2331,7 +2331,7 @@ nav a.active {
 }
 nav a.active svg,
 nav a.active .nav-count {
-  color: #000000;
+  color: white;
 }
 nav .nav-count {
   border-color: #666666;

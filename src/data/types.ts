@@ -1,5 +1,10 @@
 // Interfaces reflect the supplied JSON contract. Original seed data is preserved unchanged.
+import type seedV2 from './sample-data-v2.json';
+type V2 = typeof seedV2;
 export interface Program {
+  specialty?:string;
+  program_director_user_id?:string;
+  program_coordinator_user_id?:string;
   program_id: string;
   name: string;
   type: string;
@@ -61,6 +66,9 @@ export interface BoardMetric {
   notes: string;
 }
 export interface DutyCompliance {
+  residents_reporting?:number;
+  violations_count?:number;
+  residents_with_violations?:number;
   compliance_id: string;
   program_id: string;
   academic_period: string;
@@ -72,6 +80,11 @@ export interface DutyCompliance {
   notes: string;
 }
 export interface SpecialReview {
+  findings_summary?:string;
+  review_meeting_date?:string|null;
+  gmec_report_date?:string|null;
+  next_deadline?:string|null;
+  status_history?:{status:string;date:string}[];
   review_id: string;
   program_id: string;
   initiated_date: string;
@@ -120,7 +133,7 @@ export interface ProgramAccess {
   access_level: string;
   assigned_at: string;
 }
-export interface Dataset {
+export interface Dataset extends Pick<V2, '_meta'|'GRADUATE_OUTCOME'|'SCHOLARLY_ACTIVITY'|'PROGRAM_HEALTH_ASSESSMENT'|'PROGRAM_HEALTH_METRIC'|'FACULTY_LEADERSHIP_AGGREGATE'|'RECRUITMENT_HISTORY_SUMMARY'|'OSU_COM_CLASS_MATCH'|'NOTIFICATION'|'NOTIFICATION_RULE'|'APE_CYCLE'|'APE_REVIEW_EVENT'|'REF_LOCATION'> {
   PROGRAM: Program[];
   RESIDENT: Resident[];
   CONCERN_RECORD: Concern[];
@@ -142,6 +155,11 @@ export interface Dataset {
 }
 
 export interface RecruitmentCycle {
+  positions_offered?:number;
+  applicants_interviewed?:number;
+  applicants_ranked?:number;
+  positions_filled_match?:number|null;
+  positions_filled_soap?:number|null;
   cycle_id: string;
   program_id: string;
   application_year: number;
@@ -196,6 +214,10 @@ export interface FollowUp {
   activity_type?: string;
 }
 export interface AnnualEvaluation {
+  due_date?:string;
+  reviewed_date?:string|null;
+  reviewed_by?:string|null;
+  review_notes?:string;
   ape_id: string;
   program_id: string;
   academic_year: string;

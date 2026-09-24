@@ -70,9 +70,7 @@ export function recruitmentSummary(userId: string, f: RecruitmentFilters) {
   const programs = scope.map((program) => {
     const rows = applicants.filter((a) => a.programId === program.program_id),
       matches = rows.filter((a) => a.outcome === "Matched");
-    const capacity = capacityFixtures.find(
-      (c) => c.programId === program.program_id && String(c.year) === f.year,
-    )?.positions;
+    const capacity = data.RECRUITMENT_CYCLE.find(c=>c.program_id===program.program_id&&String(c.application_year)===f.year)?.positions_offered;
     const recorded = rows.some((a) => a.match);
     const comparable = !f.degree && !f.outcome && !f.search;
     return {
@@ -100,14 +98,12 @@ export function recruitmentSummary(userId: string, f: RecruitmentFilters) {
   };
 }
 export function cohortSummary(year: number) {
-  const cohort = extensionState.cohort.filter((c) => c.year === year),
-    participating = cohort.length,
-    matched = cohort.filter((c) => c.outcome === "Matched").length,
-    complete = cohort.every((c) => c.outcome !== "Pending");
+  const cohort=data.OSU_COM_CLASS_MATCH.find(c=>c.class_year===year);
+  const participating=cohort?.graduates_participating??0,matched=cohort?.matched_total??0;
   return {
     participating,
     matched,
-    rate: participating && complete ? matched / participating : null,
+    rate: participating ? matched / participating : null,
   };
 }
 export function recruitmentTrend(userId: string, f: RecruitmentFilters) {

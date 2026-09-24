@@ -123,8 +123,13 @@ export default function Accreditation(props: ModuleProps) {
             <Badge>{review.status}</Badge>
             <p>{review.trigger_reason}</p>
             <p>{review.summary}</p>
+            <p><strong>Findings:</strong> {review.findings_summary || 'Not recorded'}</p>
+            <p>Review meeting: {date(review.review_meeting_date)} · GMEC report: {date(review.gmec_report_date)}</p>
             {review.closed_date && <p>Closed {date(review.closed_date)}</p>}
           </div>
+        </Card>
+        <Card title="Recorded Review History" subtitle="Dated status events from the supplied review record">
+          <DataTable headers={['Date','Status']} empty={!review.status_history?.length}>{review.status_history?.map((s,i)=><tr key={i}><td>{date(s.date)}</td><td>{s.status}</td></tr>)}</DataTable>
         </Card>
         <div className="module-grid two">
           <Card
@@ -691,6 +696,7 @@ export default function Accreditation(props: ModuleProps) {
             ? [
                 { label: "Programs in Scope", value: evaluations.length },
                 { label: "APE Submitted", value: submitted },
+                { label: "Accepted / Approved", value: evaluations.filter(r=>r.record?.status==='Accepted').length },
                 {
                   label: "Missing / Not Submitted",
                   value: evaluations.length - submitted,

@@ -1,4 +1,4 @@
-import seed from "./sample-data.json";
+import seed from "./sample-data-v2.json";
 import type { Dataset, Concern, ConcernUpdate, Program } from "./types";
 export const data: Dataset = structuredClone(seed);
 export const classifications = ["Reviewable", "Non-Reviewable"];

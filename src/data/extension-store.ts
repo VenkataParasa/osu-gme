@@ -23,8 +23,7 @@ import {
   growthStatuses,
 } from "./demo-fixtures";
 
-data.APPLICANT.push(...structuredClone(recruitmentFixture));
-data.MATCH_OUTCOME.push(...structuredClone(initialMatches));
+// v2 supplies actual demo cycles, applicants and outcomes; no older supplemental rows are appended.
 export const extensionState = {
   activities: [] as ActivityEntry[],
   cohort: structuredClone(cohortFixture) as CohortParticipant[],
@@ -32,11 +31,13 @@ export const extensionState = {
   lineage: [] as Lineage[],
   busyProvider: "",
   progress: "",
-  traineeSurveys: structuredClone(traineeSurveyFixture),
-  operations: structuredClone(operationsFixture),
-  leadership: structuredClone(leadershipFixture),
-  growth: structuredClone(growthFixture) as GrowthOpportunity[],
-  growthUpdates: structuredClone(growthUpdateFixture) as GrowthUpdate[],
+  traineeSurveys: [] as typeof traineeSurveyFixture,
+  operations: [] as typeof operationsFixture,
+  leadership: [] as typeof leadershipFixture,
+  growth: data.PROGRAM_HEALTH_METRIC.filter(m=>m.metric_category==='Opportunity').flatMap(m=>{
+    const a=data.PROGRAM_HEALTH_ASSESSMENT.find(a=>a.assessment_id===m.assessment_id);return a?[{id:m.metric_id,programId:a.program_id,title:String(m.metric_value),category:'Other',description:m.metric_name,status:'Identified',identifiedDate:a.assessment_date,targetDate:null,ownerLabel:'Program leadership',source:a.source,notes:m.notes,createdAt:a.created_at,updatedAt:a.created_at}]:[];
+  }) as GrowthOpportunity[],
+  growthUpdates: [] as GrowthUpdate[],
 };
 let revision = 0;
 const listeners = new Set<() => void>();

@@ -1,4 +1,5 @@
-import type { ReactNode, FormEvent } from "react";
+import { Children, Fragment, isValidElement, useMemo, useState } from "react";
+import type { ReactNode, FormEvent, ReactElement } from "react";
 import { Download, FileText } from "lucide-react";
 import { Card, Empty, Documents } from "./shared";
 import { data, authorName, date } from "../data/repository";
@@ -118,21 +119,95 @@ export function DataTable({
   children: ReactNode;
   empty?: boolean;
 }) {
+  const [sort, setSort] = useState<{
+    column: number;
+    direction: "asc" | "desc";
+  } | null>(null);
+  function rowsOf(node: ReactNode): ReactElement[] {
+    return Children.toArray(node).flatMap((child) => {
+      if (!isValidElement<{ children?: ReactNode }>(child)) return [];
+      return child.type === Fragment ? rowsOf(child.props.children) : [child];
+    });
+  }
+  function textOf(node: ReactNode): string {
+    if (node == null || typeof node === "boolean") return "";
+    if (typeof node === "string" || typeof node === "number")
+      return String(node);
+    if (Array.isArray(node)) return node.map(textOf).join(" ");
+    return isValidElement<{ children?: ReactNode }>(node)
+      ? textOf(node.props.children)
+      : "";
+  }
+  const rows = useMemo(() => rowsOf(children), [children]);
+  const shown = useMemo(() => {
+    if (!sort) return rows;
+    return [...rows].sort((a, b) => {
+      const cells = Children.toArray(
+          (a.props as { children?: ReactNode }).children,
+        ),
+        other = Children.toArray(
+          (b.props as { children?: ReactNode }).children,
+        );
+      const left = textOf(cells[sort.column]).trim(),
+        right = textOf(other[sort.column]).trim();
+      const numeric = Number(left.replace(/[^0-9.-]/g, "")),
+        otherNumeric = Number(right.replace(/[^0-9.-]/g, ""));
+      const comparison =
+        Number.isFinite(numeric) &&
+        Number.isFinite(otherNumeric) &&
+        left !== "" &&
+        right !== ""
+          ? numeric - otherNumeric
+          : left.localeCompare(right, undefined, { numeric: true });
+      return sort.direction === "asc" ? comparison : -comparison;
+    });
+  }, [rows, sort]);
+  const toggleSort = (column: number) =>
+    setSort((current) =>
+      current?.column === column
+        ? { column, direction: current.direction === "asc" ? "desc" : "asc" }
+        : { column, direction: "asc" },
+    );
   return empty ? (
     <Empty>No records match the selected filters.</Empty>
   ) : (
-    <div className="table-scroll">
-      <table>
-        <thead>
-          <tr>
-            {headers.map((h) => (
-              <th key={h}>{h}</th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>{children}</tbody>
-      </table>
-    </div>
+    <>
+      <div className="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              {headers.map((h, column) => (
+                <th
+                  key={h}
+                  aria-sort={
+                    sort?.column === column
+                      ? sort.direction === "asc"
+                        ? "ascending"
+                        : "descending"
+                      : "none"
+                  }
+                >
+                  <button
+                    className="table-sort"
+                    onClick={() => toggleSort(column)}
+                  >
+                    {h}
+                    <span aria-hidden="true">
+                      {sort?.column === column
+                        ? sort.direction === "asc"
+                          ? " ↑"
+                          : " ↓"
+                        : " ↕"}
+                    </span>
+                  </button>
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>{shown}</tbody>
+        </table>
+      </div>
+    </>
   );
 }
 export function ExportButton({
