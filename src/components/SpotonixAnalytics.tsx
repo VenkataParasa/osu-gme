@@ -13,8 +13,11 @@ export default function SpotonixAnalytics() {
   const [popupData, setPopupData] = useState<{ show: boolean; x: number; y: number; item: any }>({ show: false, x: 0, y: 0, item: null });
   const [selectedExampleId, setSelectedExampleId] = useState("total_residents");
   const [chatInput, setChatInput] = useState("");
+  const [view, setView] = useState<"analysis" | "brief">("analysis");
+  const [watchedMetrics, setWatchedMetrics] = useState<string[]>([]);
 
   const handleChatSubmit = () => {
+    setView("analysis");
     if (!chatInput.trim()) return;
     const q = chatInput.toLowerCase();
     if (q.includes("program") || q.includes("largest")) {
@@ -317,12 +320,12 @@ export default function SpotonixAnalytics() {
           Spotonix
         </div>
         
-        <button className="spotonix-new-btn">
+        <button className="spotonix-new-btn" onClick={() => setView("analysis")}>
           <Plus size={16} /> New analysis
         </button>
 
         <div className="spotonix-nav-list">
-          <div className="spotonix-nav-item"><FileText size={16} /> Brief</div>
+          <div className={`spotonix-nav-item ${view === "brief" ? "active" : ""}`} onClick={() => setView("brief")}><FileText size={16} /> Brief</div>
           <div className="spotonix-nav-item"><CheckCircle2 size={16} /> Reviews</div>
           <div className="spotonix-nav-item"><Navigation size={16} /> Trails</div>
         </div>
@@ -339,11 +342,11 @@ export default function SpotonixAnalytics() {
           {examples.map((ex) => (
             <div 
               key={ex.id}
-              className={`spotonix-curated-item ${selectedExampleId === ex.id ? "active" : ""}`}
-              style={selectedExampleId === ex.id ? { background: "#f0f0f0" } : {}}
+              className={`spotonix-curated-item ${selectedExampleId === ex.id && view === "analysis" ? "active" : ""}`}
+              style={selectedExampleId === ex.id && view === "analysis" ? { background: "#f0f0f0" } : {}}
               onMouseEnter={(e) => handleMouseEnter(e, ex)}
               onMouseLeave={handleMouseLeave}
-              onClick={() => setSelectedExampleId(ex.id)}
+              onClick={() => { setSelectedExampleId(ex.id); setView("analysis"); }}
             >
               <ex.icon size={14} /> {ex.title}
             </div>
@@ -355,11 +358,11 @@ export default function SpotonixAnalytics() {
           {sharedExamples.map((ex) => (
             <div 
               key={ex.id}
-              className={`spotonix-curated-item ${selectedExampleId === ex.id ? "active" : ""}`}
-              style={selectedExampleId === ex.id ? { background: "#f0f0f0" } : {}}
+              className={`spotonix-curated-item ${selectedExampleId === ex.id && view === "analysis" ? "active" : ""}`}
+              style={selectedExampleId === ex.id && view === "analysis" ? { background: "#f0f0f0" } : {}}
               onMouseEnter={(e) => handleMouseEnter(e, ex)}
               onMouseLeave={handleMouseLeave}
-              onClick={() => setSelectedExampleId(ex.id)}
+              onClick={() => { setSelectedExampleId(ex.id); setView("analysis"); }}
             >
               <ex.icon size={14} /> {ex.title}
             </div>
@@ -367,8 +370,10 @@ export default function SpotonixAnalytics() {
         </div>
       </div>
 
-      <div className="spotonix-middle">
-        <div className="spotonix-topbar">
+      {view === "analysis" ? (
+        <>
+          <div className="spotonix-middle">
+            <div className="spotonix-topbar">
           <div className="spotonix-topbar-pill">
             <Layers size={14} /> Demo · Synthetic data
           </div>
@@ -475,7 +480,20 @@ export default function SpotonixAnalytics() {
                     <h3 style={{margin: "0 0 4px", fontSize: 16}}>{selectedExample.watchMetric} <span className="spotonix-badge-blue" style={{display:"inline-flex", padding:"2px 8px", fontSize: 10, marginLeft: 8}}>PRIMARY</span></h3>
                     <p style={{margin: 0, color: "#666", fontSize: 13}}>Track this over time in your Brief.</p>
                   </div>
-                  <button style={{background: "#333", color: "white", border: "none", padding: "8px 16px", borderRadius: 6, fontWeight: 600, display: "flex", alignItems: "center"}}>Watch <ChevronDown size={14} style={{marginLeft: 8}}/></button>
+                  {watchedMetrics.includes(selectedExampleId) ? (
+                    <div style={{display: 'flex', alignItems: 'center', gap: 12}}>
+                      <span style={{color: '#00a35c', fontSize: 13, display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer'}} onClick={() => setWatchedMetrics(watchedMetrics.filter(id => id !== selectedExampleId))}>
+                        <CheckCircle2 size={16}/> Already watching
+                      </span>
+                      <button onClick={() => setView("brief")} style={{background: "white", color: "#333", border: "1px solid #ccc", padding: "8px 16px", borderRadius: 6, fontWeight: 600, display: "flex", alignItems: "center", cursor: "pointer"}}>
+                        View in Brief <ArrowUpRight size={14} style={{marginLeft: 8}}/>
+                      </button>
+                    </div>
+                  ) : (
+                    <button onClick={() => setWatchedMetrics([...watchedMetrics, selectedExampleId])} style={{background: "#333", color: "white", border: "none", padding: "8px 16px", borderRadius: 6, fontWeight: 600, display: "flex", alignItems: "center", cursor: "pointer"}}>
+                      Watch <ChevronDown size={14} style={{marginLeft: 8}}/>
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
@@ -590,6 +608,66 @@ export default function SpotonixAnalytics() {
           </div>
         )}
       </div>
+      </>
+      ) : (
+        <div className="spotonix-brief-view">
+          <div className="spotonix-brief-header">
+            <span className="spotonix-badge" style={{background: '#ffe8e5', color: '#cc4b37', padding: '4px 12px', borderRadius: 16, fontSize: 12, fontWeight: 600}}>Portfolio Digest</span>
+            <p style={{color: '#666', marginTop: 16}}>Good morning, Dandapani • portfolio for 21 Sept</p>
+            <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+              <h2 className="spotonix-brief-title">{watchedMetrics.length > 0 ? `${watchedMetrics.length} watched signals changed.` : "0 watched signals changed."}</h2>
+              <div style={{background: '#f4fbf7', border: '1px solid #d5f2e3', padding: '12px 16px', borderRadius: 8, display: 'flex', alignItems: 'center', gap: 8}}>
+                <CheckCircle2 size={18} color="#00a35c"/>
+                <span style={{fontWeight: 600}}>{watchedMetrics.length > 0 ? `${Math.max(1, watchedMetrics.length - 1)} of ${watchedMetrics.length} watched signals are fresh.` : "No signals watched"}</span>
+              </div>
+            </div>
+            <p style={{color: '#666', marginBottom: 24}}>A portfolio health digest for the business signals you watch. Big moves rise first; quiet metrics stay calm.</p>
+            
+            <div className="spotonix-brief-tabs">
+              <div className="spotonix-brief-tab active">Overview</div>
+              <div className="spotonix-brief-tab">Status Changes</div>
+              <div className="spotonix-brief-tab">Likely Misses</div>
+              <div className="spotonix-brief-tab">Big Moves</div>
+              <div className="spotonix-brief-tab">Promising Trends</div>
+            </div>
+          </div>
+          
+          <div className="spotonix-brief-grid">
+            {watchedMetrics.length === 0 && (
+              <div style={{padding: 24, color: '#888'}}>You aren't watching any signals yet. Go to an analysis and click "Watch" to add it here.</div>
+            )}
+            {watchedMetrics.map(id => {
+              const ex = allExamples.find(e => e.id === id);
+              if (!ex) return null;
+              return (
+                <div key={id} className="spotonix-brief-card">
+                  <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8}}>
+                    <span style={{color: '#d32f2f', background: '#ffebee', padding: '4px 10px', borderRadius: 12, fontSize: 12, fontWeight: 600}}>↓ Off track</span>
+                    <RotateCcw size={14} color="#888"/>
+                  </div>
+                  <h3 style={{margin: '16px 0 4px', fontSize: 20}}>{ex.watchMetric} <Menu size={14} style={{marginLeft: 8, color: '#ccc'}}/></h3>
+                  <p style={{margin: 0, color: '#888', fontSize: 13}}>by {ex.metricLabel}</p>
+                  <p style={{margin: '8px 0 0', color: '#888', fontSize: 12}}>Refreshes weekly - next Mon 3 Aug</p>
+                  
+                  <div style={{marginTop: 24}}>
+                    <div style={{fontSize: 12, fontWeight: 600, color: '#888', marginBottom: 4}}>TODAY</div>
+                    <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'baseline'}}>
+                      <div style={{fontSize: 28, fontWeight: 700}}>{ex.metric}</div>
+                      <span style={{color: '#00a35c', fontWeight: 600, fontSize: 14}}>↑ +12.0%</span>
+                    </div>
+                  </div>
+                  
+                  <div className="spotonix-card-chart">
+                    {[40,45,50,60,40,70,80,90,100,50].map((h, i) => (
+                      <div key={i} className="spotonix-bar" style={{height: `${h}%`, background: i % 2 === 0 ? '#ff8a80' : '#69f0ae'}}></div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {popupData.show && popupData.item && (
         <div className="spotonix-hover-popup" style={{ top: popupData.y, left: popupData.x }}>

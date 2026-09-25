@@ -727,3 +727,63 @@
 .spotonix-chat-send:hover {
   background: #666;
 }
+
+.spotonix-brief-view {
+  flex: 1;
+  padding: 32px;
+  background: #fdfdfd;
+  overflow-y: auto;
+}
+.spotonix-brief-header {
+  background: white;
+  padding: 24px;
+  border-radius: 12px;
+  border: 1px solid #e5e5e5;
+  margin-bottom: 24px;
+}
+.spotonix-brief-title {
+  font-size: 32px;
+  font-weight: 600;
+  margin: 12px 0;
+}
+.spotonix-brief-tabs {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 24px;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 8px;
+}
+.spotonix-brief-tab {
+  font-size: 14px;
+  font-weight: 600;
+  color: #666;
+  cursor: pointer;
+}
+.spotonix-brief-tab.active {
+  color: #1a1a1a;
+  border-bottom: 2px solid #1a1a1a;
+}
+.spotonix-brief-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+}
+.spotonix-brief-card {
+  background: white;
+  border-radius: 12px;
+  border: 1px solid #e5e5e5;
+  padding: 16px;
+}
+.spotonix-card-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  height: 120px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #eee;
+}
+.spotonix-bar {
+  flex: 1;
+  border-radius: 4px 4px 0 0;
+}
