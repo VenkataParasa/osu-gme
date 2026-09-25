@@ -1,0 +1,729 @@
+.spotonix-layout {
+  display: flex;
+  height: calc(100vh - 60px); /* Adjust based on top nav height if any */
+  width: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background: #fdfdfd;
+  color: #1a1a1a;
+  overflow: hidden;
+}
+
+.spotonix-left {
+  width: 260px;
+  border-right: 1px solid #e5e5e5;
+  background: #f9f9f9;
+  display: flex;
+  flex-direction: column;
+  padding: 16px 0;
+  overflow-y: auto;
+}
+
+.spotonix-logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  font-size: 20px;
+  padding: 0 16px 16px;
+}
+
+.spotonix-logo svg {
+  color: #ff4500;
+}
+
+.spotonix-new-btn {
+  margin: 0 16px 24px;
+  background: white;
+  border: 1px solid #e5e5e5;
+  border-radius: 6px;
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+.spotonix-nav-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 0 16px;
+  margin-bottom: 24px;
+}
+
+.spotonix-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px;
+  border-radius: 6px;
+  font-size: 14px;
+  color: #4a4a4a;
+  cursor: pointer;
+}
+
+.spotonix-nav-item:hover {
+  background: #f0f0f0;
+}
+
+.spotonix-filters {
+  display: flex;
+  gap: 8px;
+  padding: 0 16px;
+  margin-bottom: 24px;
+}
+
+.spotonix-filter-btn {
+  background: #f0f0f0;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 13px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+.spotonix-filter-btn.active {
+  background: #e5e5e5;
+}
+
+.spotonix-section-title {
+  font-size: 11px;
+  text-transform: uppercase;
+  color: #888;
+  font-weight: 600;
+  padding: 0 16px;
+  margin-bottom: 12px;
+  letter-spacing: 0.5px;
+}
+.spotonix-section-subtitle {
+  font-size: 11px;
+  color: #888;
+  padding: 0 16px;
+  margin-bottom: 8px;
+  margin-top: -8px;
+}
+
+.spotonix-curated-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 0 8px;
+  margin-bottom: 24px;
+}
+
+.spotonix-curated-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  font-size: 13px;
+  color: #333;
+  cursor: pointer;
+  border-radius: 4px;
+}
+.spotonix-curated-item:hover {
+  background: #f0f0f0;
+}
+.spotonix-curated-item svg {
+  color: #888;
+  flex-shrink: 0;
+}
+
+/* Middle */
+.spotonix-middle {
+  flex: 1;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.spotonix-topbar {
+  height: 50px;
+  border-bottom: 1px solid #e5e5e5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 16px;
+}
+
+.spotonix-topbar-pill {
+  background: #f5f5f5;
+  border: 1px solid #e5e5e5;
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 12px;
+  color: #666;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.spotonix-chat-area {
+  flex: 1;
+  padding: 40px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.spotonix-message {
+  display: flex;
+  gap: 16px;
+  max-width: 800px;
+}
+
+.spotonix-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #e5e5e5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 14px;
+  color: #666;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+.spotonix-avatar.system {
+  background: transparent;
+  color: #ff4500;
+}
+
+.spotonix-msg-content {
+  flex: 1;
+}
+
+.spotonix-msg-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.spotonix-msg-name {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.spotonix-msg-text {
+  font-size: 16px;
+  color: #1a1a1a;
+}
+
+.spotonix-result-card {
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  padding: 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #fafafa;
+  margin-top: 12px;
+}
+
+.spotonix-result-card h2 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.spotonix-result-card span {
+  color: #666;
+  font-size: 14px;
+  margin-left: 12px;
+  font-weight: 400;
+}
+
+.spotonix-view-result {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #1a1a1a;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.spotonix-msg-actions {
+  display: flex;
+  gap: 16px;
+  margin-top: 16px;
+  color: #666;
+}
+.spotonix-msg-actions button {
+  background: none;
+  border: none;
+  color: #666;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  cursor: pointer;
+}
+.spotonix-msg-actions button:hover {
+  color: #1a1a1a;
+}
+
+.spotonix-promo-box {
+  background: #fafafa;
+  border: 1px solid #e5e5e5;
+  border-radius: 12px;
+  padding: 24px;
+  margin-top: 24px;
+  margin-left: 48px;
+  max-width: 600px;
+}
+
+.spotonix-promo-box h3 {
+  margin: 0 0 8px;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.spotonix-promo-box p {
+  margin: 0;
+  color: #666;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.spotonix-promo-box button {
+  margin-top: 16px;
+  background: white;
+  border: 1px solid #e5e5e5;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-weight: 500;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+/* Right Sidebar */
+.spotonix-right {
+  width: 500px;
+  border-left: 1px solid #e5e5e5;
+  background: #fdfdfd;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.spotonix-right-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  border-bottom: 1px solid #e5e5e5;
+}
+
+.spotonix-right-tabs {
+  display: flex;
+  gap: 24px;
+}
+
+.spotonix-tab {
+  font-size: 13px;
+  font-weight: 600;
+  color: #888;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.spotonix-tab.active {
+  color: #1a1a1a;
+}
+
+.spotonix-right-actions {
+  display: flex;
+  gap: 12px;
+  color: #666;
+}
+
+.spotonix-right-content {
+  padding: 24px;
+}
+
+.spotonix-big-metric {
+  margin-bottom: 24px;
+}
+.spotonix-big-metric h1 {
+  margin: 0;
+  font-size: 42px;
+  font-weight: 700;
+  letter-spacing: -1px;
+}
+.spotonix-big-metric span {
+  font-size: 15px;
+  color: #666;
+  margin-left: 12px;
+}
+
+.spotonix-bullets {
+  color: #4a4a4a;
+  font-size: 14px;
+  line-height: 1.6;
+  margin-bottom: 32px;
+  padding-left: 16px;
+}
+.spotonix-bullets li {
+  margin-bottom: 8px;
+}
+.spotonix-bullets li::marker {
+  color: #888;
+}
+
+.spotonix-panel-section {
+  border: 1px solid #ffbb99;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 24px;
+  background: white;
+}
+
+.spotonix-panel-header {
+  padding: 16px;
+  background: #fff5f0;
+  border-bottom: 1px solid #ffbb99;
+  font-size: 13px;
+  font-weight: 600;
+  color: #666;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.spotonix-panel-body {
+  padding: 24px 16px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #1a1a1a;
+}
+
+.spotonix-what-tells {
+  margin-top: 24px;
+  border-top: 1px solid #e5e5e5;
+  padding-top: 24px;
+}
+.spotonix-what-tells h4 {
+  font-size: 11px;
+  text-transform: uppercase;
+  color: #888;
+  margin: 0 0 16px 0;
+  letter-spacing: 0.5px;
+}
+
+/* HOW I INTERPRETED THIS VIEW */
+.spotonix-interpreted-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid #1a1a1a;
+  background: #fdfdfd;
+}
+.spotonix-interpreted-header-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #666;
+}
+.spotonix-interpreted-badges {
+  display: flex;
+  gap: 8px;
+}
+.spotonix-badge-blue {
+  background: #e6f0ff;
+  color: #0066ff;
+  padding: 4px 12px;
+  border-radius: 16px;
+  font-size: 13px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.spotonix-badge-green {
+  background: #e6ffe6;
+  color: #009900;
+  padding: 4px 12px;
+  border-radius: 16px;
+  font-size: 13px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.spotonix-box {
+  background: #f9fbfd;
+  border: 1px solid #d0e1ff;
+  border-radius: 12px;
+  padding: 24px;
+  margin: 24px;
+}
+.spotonix-box h3 {
+  margin: 0 0 12px;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #1a1a1a;
+}
+.spotonix-box p {
+  margin: 0 0 24px;
+  color: #666;
+  font-size: 14px;
+  line-height: 1.5;
+}
+.spotonix-box-tags {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.spotonix-tag {
+  background: white;
+  border: 1px solid #e5e5e5;
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 13px;
+  color: #666;
+}
+
+.spotonix-box-footer {
+  background: white;
+  border: 1px solid #e5e5e5;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.spotonix-kg-section {
+  background: #fafafa;
+  border: 1px solid #e5e5e5;
+  border-radius: 12px;
+  padding: 24px;
+  margin: 0 24px 24px;
+}
+.spotonix-kg-header {
+  font-size: 11px;
+  text-transform: uppercase;
+  color: #888;
+  letter-spacing: 1px;
+  margin-bottom: 12px;
+  display: flex;
+  justify-content: space-between;
+}
+.spotonix-kg-title {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0 0 16px;
+}
+.spotonix-kg-question {
+  background: white;
+  border: 1px solid #e5e5e5;
+  padding: 16px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-style: italic;
+  color: #666;
+  margin-bottom: 24px;
+}
+.spotonix-kg-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.spotonix-kg-card {
+  background: white;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  padding: 16px;
+}
+.spotonix-kg-card-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.spotonix-kg-added {
+  background: #fff5e6;
+  color: #cc7a00;
+  padding: 4px 8px;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid #ffe6b3;
+}
+.spotonix-kg-found {
+  background: #f0f5ff;
+  color: #0055cc;
+  padding: 4px 8px;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid #cce0ff;
+}
+.spotonix-kg-card h4 {
+  margin: 0;
+  font-size: 15px;
+}
+.spotonix-kg-card p {
+  margin: 0 0 12px;
+  font-size: 13px;
+  color: #666;
+}
+
+.spotonix-sql-evidence {
+  margin: 0 24px 24px;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+}
+.spotonix-sql-header {
+  padding: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 600;
+  cursor: pointer;
+}
+.spotonix-sql-body {
+  padding: 16px;
+  border-top: 1px solid #e5e5e5;
+  background: #fafafa;
+}
+.spotonix-sql-code {
+  background: #f5f5f5;
+  padding: 16px;
+  border-radius: 8px;
+  font-family: monospace;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #333;
+}
+.spotonix-sql-keyword {
+  color: #d73a49;
+}
+.spotonix-sql-function {
+  color: #005cc5;
+}
+
+.spotonix-hover-popup {
+  position: fixed;
+  z-index: 1000;
+  width: 320px;
+  background: white;
+  border: 1px solid #e5e5e5;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+  padding: 20px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  pointer-events: none;
+}
+
+.spotonix-hover-popup-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.spotonix-hover-popup-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1a1a1a;
+  line-height: 1.4;
+}
+
+.spotonix-hover-popup-metric-box {
+  background: #f0f0f0;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 16px;
+  border: 1px solid #e5e5e5;
+}
+.spotonix-hover-popup-metric-value {
+  font-size: 28px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin-bottom: 4px;
+}
+.spotonix-hover-popup-metric-sub {
+  font-size: 13px;
+  color: #666;
+  line-height: 1.4;
+}
+
+.spotonix-hover-popup-desc {
+  font-size: 13px;
+  color: #4a4a4a;
+  line-height: 1.5;
+  margin-bottom: 16px;
+}
+
+.spotonix-hover-popup-footer {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #888;
+}
+
+.spotonix-chat-input-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: white;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin: 24px;
+  margin-top: auto;
+}
+.spotonix-chat-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: 14px;
+  font-family: inherit;
+  color: #1a1a1a;
+  padding: 8px 0;
+}
+.spotonix-chat-send {
+  background: #888;
+  border: none;
+  border-radius: 6px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.spotonix-chat-send:hover {
+  background: #666;
+}

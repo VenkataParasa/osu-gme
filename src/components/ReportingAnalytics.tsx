@@ -29,6 +29,8 @@ import {
   growthRows,
   healthYears,
 } from "../data/program-health-selectors";
+import SpotonixAnalytics from "./SpotonixAnalytics";
+
 const definitions = [
   [
     "annual",
@@ -73,6 +75,7 @@ const definitions = [
     "Configured factual attention indicators",
   ],
 ] as const;
+
 export default function ReportingAnalytics({
   userId,
   path,
@@ -128,6 +131,11 @@ export default function ReportingAnalytics({
       />
     </div>
   );
+  
+  if (view === "spotonix") {
+    return <SpotonixAnalytics />;
+  }
+
   if (view === "catalogue")
     return (
       <>
@@ -263,6 +271,7 @@ export default function ReportingAnalytics({
         items={[
           { id: "overview", label: "Overview" },
           { id: "catalogue", label: "Report Catalogue" },
+          { id: "spotonix", label: "AI Analytics" },
         ]}
         onSelect={(v) =>
           navigate(
