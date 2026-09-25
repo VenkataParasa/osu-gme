@@ -458,10 +458,10 @@ export default function SpotonixAnalytics() {
               <h1>{selectedExample.metric}</h1>
               <span>{selectedExample.metricLabel}</span>
             </div>
-            {selectedExample.metric2 && (
+            {(selectedExample as any).metric2 && (
               <div className="spotonix-big-metric" style={{marginTop: -16}}>
-                <h1>{selectedExample.metric2}</h1>
-                <span>{selectedExample.metric2Label}</span>
+                <h1>{(selectedExample as any).metric2}</h1>
+                <span>{(selectedExample as any).metric2Label}</span>
               </div>
             )}
 
