@@ -11,6 +11,23 @@ import {
 } from "recharts";
 import { boardTrend, date, documents, percent } from "../data/repository";
 import type { DocumentMetadata } from "../data/types";
+export const healthStatusTone = (status: string) => {
+  switch (status) {
+    case "On Track":
+      return "green";
+    case "Attention":
+    case "Needs Attention":
+      return "amber";
+    case "Needs Review":
+      return "danger";
+    case "No Data":
+      return "neutral";
+    case "Change":
+      return "blue";
+    default:
+      return undefined;
+  }
+};
 export function Badge({
   children,
   tone,
@@ -21,6 +38,7 @@ export function Badge({
   const s = String(children);
   const color =
     tone ||
+    healthStatusTone(s) ||
     (s === "Reviewable" ||
     s === "Heightened" ||
     s === "In Progress" ||

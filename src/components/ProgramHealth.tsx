@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Card, Badge, Empty } from "./shared";
+import { Card, Badge, Empty, healthStatusTone as tone } from "./shared";
 import {
   ModuleHeading,
   FilterSelect,
@@ -26,22 +26,15 @@ import {
   attentionItems,
   growthRows,
   healthComparison,
-  leadershipTenure,
 } from "../data/program-health-selectors";
 import {
   extensionState,
   saveGrowthOpportunity,
   addGrowthUpdate,
 } from "../data/extension-store";
-import { growthCategories, growthStatuses } from "../data/demo-fixtures";
-const tone = (s: string) =>
-  s === "Needs Review"
-    ? "danger"
-    : s === "Attention"
-      ? "amber"
-      : s === "Change"
-        ? "blue"
-        : undefined;
+import { growthCategories, growthStatuses } from "../data/growth-opportunities";
+import { traineeHealthRows } from "../data/trainee-health";
+import { facultyWorkforceRows } from "../data/faculty-workforce";
 export default function ProgramHealth({
   userId,
   path,
@@ -90,13 +83,11 @@ export default function ProgramHealth({
       visible === "snapshot"
         ? snapshot.indicators
         : snapshot.indicators.filter((i) => i.domain.toLowerCase() === visible);
-    const survey = extensionState.traineeSurveys.filter(
-      (s) => s.programId === detail,
+    const survey = traineeHealthRows(userId, { program: detail });
+    const leadership = facultyWorkforceRows(userId, { program: detail }).sort((a, b) =>
+      a.aggregate.academic_year.localeCompare(b.aggregate.academic_year),
     );
-    const leadership = extensionState.leadership.filter(
-      (l) => l.programId === detail,
-    );
-    const current = leadership.filter((l) => !l.endDate);
+    const currentLeadership = leadership.at(-1);
     const ops = extensionState.operations.find(
       (o) => o.programId === detail && o.academicYear === year,
     );
@@ -201,38 +192,35 @@ export default function ProgramHealth({
         {visible === "trainees" && (
           <>
             <div className="module-notice">
-              Aggregate institutional survey fixture for demonstration only. It
-              contains no individual health profiles, diagnoses, or clinical
-              information.
+              Aggregate institutional survey results only. This contains no
+              individual health profiles, diagnoses, or clinical information.
             </div>
             <Card
               title="Institutional Trainee Health Survey"
-              subtitle="Program-level aggregate response and dimension results"
+              subtitle="Program-level aggregate results by survey dimension"
+              action={
+                <button className="text-button" onClick={() => navigate("trainee-health", { program: detail })}>
+                  Open Trainee Health workspace →
+                </button>
+              }
             >
               <DataTable
-                headers={[
-                  "Period",
-                  "Responses",
-                  "Wellbeing",
-                  "Program Support",
-                  "Training Environment",
-                  "Source",
-                ]}
+                headers={["Period", "Dimension", "Value", "Source"]}
                 empty={!survey.length}
               >
-                {survey.map((s) => (
-                  <tr key={s.id}>
-                    <td>{s.academicYear}</td>
-                    <td>
-                      {s.responses} / {s.eligible} (
-                      {percent(s.responses / s.eligible)})
-                    </td>
-                    <td>{s.wellbeing.toFixed(1)} / 5</td>
-                    <td>{s.support.toFixed(1)} / 5</td>
-                    <td>{s.environment.toFixed(1)} / 5</td>
-                    <td>{s.source}</td>
-                  </tr>
-                ))}
+                {survey.flatMap((s) =>
+                  s.metrics.map((m) => (
+                    <tr key={`${s.academicYear}:${m.name}`}>
+                      <td>{s.academicYear}</td>
+                      <td>{m.name}</td>
+                      <td>
+                        {m.value}
+                        {m.unit === "%" ? "%" : ` ${m.unit}`}
+                      </td>
+                      <td>{s.source}</td>
+                    </tr>
+                  )),
+                )}
               </DataTable>
             </Card>
           </>
@@ -291,33 +279,41 @@ export default function ProgramHealth({
         )}
         {visible === "leadership" && (
           <Card
-            title="Faculty & Leadership"
-            subtitle="Minimal Program Health fixture; no HR, credentialing, performance, or payroll data"
+            title="Faculty & Leadership Workforce"
+            subtitle="Aggregate GME workforce indicators only — not an HR personnel system"
+            action={
+              <button className="text-button" onClick={() => navigate("faculty-workforce", { program: detail })}>
+                Open Faculty & Workforce workspace →
+              </button>
+            }
           >
             <DataTable
               headers={[
-                "Person / Aggregate",
-                "Role",
-                "Start",
-                "End",
-                "Tenure",
+                "Academic Year",
+                "PD Tenure",
+                "Leadership Change",
+                "Core Faculty",
+                "Turnover Rate",
                 "Source",
               ]}
               empty={!leadership.length}
             >
               {leadership.map((l) => (
-                <tr key={l.id}>
-                  <td>{l.personDisplayName}</td>
-                  <td>{l.role}</td>
-                  <td>{date(l.startDate)}</td>
-                  <td>{date(l.endDate)}</td>
-                  <td>{leadershipTenure(l)}</td>
-                  <td>{l.source}</td>
+                <tr key={l.aggregate.aggregate_id}>
+                  <td>{l.aggregate.academic_year}</td>
+                  <td>
+                    {l.aggregate.program_director_tenure_years} yrs
+                    <small><Badge tone={l.tenureStatus === "On Track" ? "green" : l.tenureStatus === "Attention" ? "amber" : "danger"}>{l.tenureStatus}</Badge></small>
+                  </td>
+                  <td>{l.aggregate.leadership_change_this_year ? "Yes" : "No"}</td>
+                  <td>{l.aggregate.core_faculty_count}</td>
+                  <td>{percent(l.aggregate.faculty_turnover_rate)}</td>
+                  <td>{l.aggregate.source}</td>
                 </tr>
               ))}
             </DataTable>
             <p className="form-hint">
-              Current leadership: {current.length || "Not recorded"} record(s).
+              Current Program Director tenure: {currentLeadership ? `${currentLeadership.aggregate.program_director_tenure_years} years` : "Not recorded"}.
               Historical records remain available after changes.
             </p>
           </Card>
@@ -539,9 +535,7 @@ export default function ProgramHealth({
           { label: "Attention Items", value: attention.length },
           {
             label: "Survey Records Available",
-            value: extensionState.traineeSurveys.filter(
-              (s) => s.academicYear === year,
-            ).length,
+            value: traineeHealthRows(userId, { year }).length,
           },
           {
             label: "Open Growth Opportunities",

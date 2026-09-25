@@ -256,6 +256,5 @@ export class MockNewInnovationsProvider
   }
 }
 export const integrationProviders: IntegrationProvider[] = [
-  new MockNRMPProvider(),
   new MockNewInnovationsProvider(),
 ];

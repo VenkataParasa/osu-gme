@@ -13,7 +13,7 @@ export default function Integrations({ userId, navigate, toast }: ModuleProps) {
   const [selected, setSelected] = useState("");
   const [scenario, setScenario] = useState<"normal" | "failure">("normal");
   const institutional = ["ROL-01", "ROL-02"].includes(
-    userRole(userId)?.role_id || "",
+    userRole(userId)?.role_id || ""
   );
   if (!institutional)
     return (
@@ -31,8 +31,8 @@ export default function Integrations({ userId, navigate, toast }: ModuleProps) {
         description="Demonstration connectors using local fixtures. No external services are contacted."
       />
       <div className="module-notice">
-        NRMP is a simulated integration. New Innovations represents a planned
-        integration; its production transport mechanism is not yet defined.
+        New Innovations represents a planned integration; its production
+        transport mechanism is not yet defined.
       </div>
       <div className="module-filters">
         <label className="module-filter">
@@ -55,11 +55,7 @@ export default function Integrations({ userId, navigate, toast }: ModuleProps) {
             <Card
               key={provider.name}
               title={provider.name}
-              subtitle={
-                provider.name === "NRMP"
-                  ? "Recruitment & Match Data · Demonstration Connector"
-                  : "Received Program Compliance Results · Mock Connector"
-              }
+              subtitle="Received Program Compliance Results · Mock Connector"
             >
               <div className="integration-content">
                 <Badge tone="blue">Simulated Integration</Badge>
@@ -69,7 +65,7 @@ export default function Integrations({ userId, navigate, toast }: ModuleProps) {
                     <dd>
                       {status.lastSuccessful
                         ? new Date(
-                            status.lastSuccessful.completedAt,
+                            status.lastSuccessful.completedAt
                           ).toLocaleString()
                         : "Not run in this session"}
                     </dd>
@@ -79,7 +75,7 @@ export default function Integrations({ userId, navigate, toast }: ModuleProps) {
                     <dd>
                       {status.lastAttempt
                         ? new Date(
-                            status.lastAttempt.startedAt,
+                            status.lastAttempt.startedAt
                           ).toLocaleString()
                         : "Not attempted"}
                     </dd>
@@ -108,8 +104,7 @@ export default function Integrations({ userId, navigate, toast }: ModuleProps) {
                     }
                   }}
                 >
-                  Simulate{" "}
-                  {provider.name === "NRMP" ? "NRMP" : "New Innovations"} Sync
+                  Simulate {provider.name} Sync
                 </button>
                 {status.busy && (
                   <div className="sync-progress" role="status">
@@ -118,9 +113,8 @@ export default function Integrations({ userId, navigate, toast }: ModuleProps) {
                   </div>
                 )}
                 <p className="form-hint">
-                  {provider.name === "NRMP"
-                    ? "Applies a deterministic 2027 future-cycle demo payload. Repeating the sync skips unchanged records."
-                    : "Imports a prepared General Surgery compliance result. No duty-hour logs or calculations are created."}
+                  Imports a prepared General Surgery compliance result. No
+                  duty-hour logs or calculations are created.
                 </p>
               </div>
             </Card>
@@ -140,7 +134,7 @@ export default function Integrations({ userId, navigate, toast }: ModuleProps) {
           </button>
         </div>
       </Card>
-      <Card
+      {/* <Card
         title="Sync History"
         subtitle="Runs retained for this browser session"
       >
@@ -179,7 +173,7 @@ export default function Integrations({ userId, navigate, toast }: ModuleProps) {
             </tr>
           ))}
         </DataTable>
-      </Card>
+      </Card> */}
       {run && (
         <Card
           title={`${run.provider} Sync Details`}
@@ -201,7 +195,7 @@ export default function Integrations({ userId, navigate, toast }: ModuleProps) {
                     .map((id) =>
                       id === "Institutional"
                         ? "Institutional cohort"
-                        : programName(id),
+                        : programName(id)
                     )
                     .join(", ")
                 : "None"}

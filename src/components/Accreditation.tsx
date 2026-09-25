@@ -10,6 +10,7 @@ import {
   ExportButton,
   ActivityHistory,
   UploadPanel,
+  Modal,
   type ModuleProps,
 } from "./module-shared";
 import {
@@ -22,6 +23,7 @@ import {
   academicYear,
   authorName,
 } from "../data/repository";
+import { collegeIdForProgram, collegeName, getAuthorizedColleges } from "../data/colleges";
 import {
   reviewRows,
   reviewSummary,
@@ -36,6 +38,7 @@ import {
   addFollowUp,
   uploadReviewDocument,
   uploadAPE,
+  findExistingAPE,
   today,
 } from "../data/extension-store";
 import type { ReviewAction } from "../data/types";
@@ -46,14 +49,18 @@ export default function Accreditation(props: ModuleProps) {
     ape = path.startsWith("ape") || path === "reports/ape",
     id = report ? undefined : path.split("/")[1];
   const [editing, setEditing] = useState<ReviewAction | null>(null);
+  const [apeUploadOpen, setApeUploadOpen] = useState(false);
   const scope = allowedPrograms(userId),
+    colleges = getAuthorizedColleges(userId),
     year = params.get("year") || (ape ? apeYears()[0] : ""),
     program = params.get("program") || "",
+    college = params.get("college") || "",
     status = params.get("status") || "",
     deadline = params.get("deadline") || "";
+  const programsInScope = college ? scope.filter((p) => collegeIdForProgram(p) === college) : scope;
   const rows = reviewRows(userId, { year, program, status, deadline }),
     counts = reviewSummary(rows);
-  const evaluations = apeRows(userId, year, program, status),
+  const evaluations = apeRows(userId, year, program, status, college),
     submitted = evaluations.filter((a) => a.submitted).length,
     docCount = evaluations.reduce((n, r) => n + r.docs.length, 0);
   function filter(key: string, value: string) {
@@ -506,6 +513,7 @@ export default function Accreditation(props: ModuleProps) {
                           : "primary",
                         String(f.get("notes") || ""),
                         userId,
+                        { newVersion: f.get("newVersion") === "on" },
                       ),
                     )
                   )
@@ -532,6 +540,12 @@ export default function Accreditation(props: ModuleProps) {
                   Evaluation Notes
                   <textarea name="notes" maxLength={4000} />
                 </label>
+                {row.record?.submitted_date && (
+                  <label>
+                    <input type="checkbox" name="newVersion" style={{ width: "auto", display: "inline-block" }} />
+                    {" "}Replace as a new version (an APE already exists for this program/year)
+                  </label>
+                )}
                 <p className="form-hint">
                   PDF, DOC, DOCX, PNG or JPG · up to 10 MB. Primary uploads set
                   the record to Submitted. Existing documents are preserved.
@@ -550,6 +564,7 @@ export default function Accreditation(props: ModuleProps) {
   const headers = ape
     ? [
         "Program",
+        "College",
         "Academic Year",
         "APE Status",
         "Submitted",
@@ -569,6 +584,7 @@ export default function Accreditation(props: ModuleProps) {
   const csvRows = ape
     ? evaluations.map((r) => [
         r.program.name,
+        collegeName(collegeIdForProgram(r.program)),
         year,
         r.record?.status || "Not Recorded",
         r.record?.submitted_date,
@@ -615,28 +631,44 @@ export default function Accreditation(props: ModuleProps) {
             rows={csvRows}
           />
         ) : (
-          <button
-            className="button"
-            onClick={() =>
-              navigate(ape ? "reports/ape" : "reports/reviews", {
-                year,
-                program,
-                status,
-                deadline,
-              })
-            }
-          >
-            View Report
-          </button>
+          <div className="inline-gap">
+            {ape && (
+              <button className="button primary" onClick={() => setApeUploadOpen(true)}>
+                Upload APE
+              </button>
+            )}
+            <button
+              className="button"
+              onClick={() =>
+                navigate(ape ? "reports/ape" : "reports/reviews", {
+                  year,
+                  program,
+                  status,
+                  deadline,
+                })
+              }
+            >
+              View Report
+            </button>
+          </div>
         )}
       </ModuleHeading>
       {!report && tabs}
       <div className="module-filters">
+        {ape && (
+          <FilterSelect
+            label="College"
+            value={college}
+            all="All Colleges"
+            options={colleges.map((c) => ({ value: c.id, label: c.shortName }))}
+            onChange={(v) => navigate(path, { ...Object.fromEntries(params), college: v, program: "" })}
+          />
+        )}
         <FilterSelect
           label="Program"
           value={program}
           all="All Assigned Programs"
-          options={scope.map((p) => ({
+          options={programsInScope.map((p) => ({
             value: p.program_id,
             label: shortName(p.name),
           }))}
@@ -737,6 +769,7 @@ export default function Accreditation(props: ModuleProps) {
                       {shortName(r.program.name)}
                     </button>
                   </td>
+                  <td>{collegeName(collegeIdForProgram(r.program))}</td>
                   <td>{year}</td>
                   <td>
                     <Badge>{r.record?.status || "Not Recorded"}</Badge>
@@ -797,6 +830,169 @@ export default function Accreditation(props: ModuleProps) {
               ))}
         </DataTable>
       </Card>
+      {ape && (
+        <Modal
+          open={apeUploadOpen}
+          eyebrow="Annual Program Evaluations"
+          title="Upload APE"
+          onClose={() => setApeUploadOpen(false)}
+          wide
+        >
+          <UploadAPEFlow
+            userId={userId}
+            scope={scope.filter((p) => canEdit(userId, p.program_id))}
+            years={apeYears()}
+            defaultYear={year}
+            onDone={() => {
+              setApeUploadOpen(false);
+              toast("APE uploaded. Existing records are preserved as prior versions.");
+            }}
+            navigateToExisting={(programId, y) => {
+              setApeUploadOpen(false);
+              navigate(`ape/${programId}`, { year: y });
+            }}
+          />
+        </Modal>
+      )}
     </>
+  );
+}
+
+function UploadAPEFlow({
+  userId,
+  scope,
+  years,
+  defaultYear,
+  onDone,
+  navigateToExisting,
+}: {
+  userId: string;
+  scope: (typeof data)["PROGRAM"];
+  years: string[];
+  defaultYear: string;
+  onDone: () => void;
+  navigateToExisting: (programId: string, year: string) => void;
+}) {
+  const [duplicate, setDuplicate] = useState<{ programId: string; year: string } | null>(null);
+  const [pendingForm, setPendingForm] = useState<FormData | null>(null);
+  const [supportingCount, setSupportingCount] = useState(1);
+  if (!scope.length) return <Empty>You do not have edit access to any program in scope.</Empty>;
+
+  function submitPrimary(form: FormData, allowNewVersion = false) {
+    const programId = String(form.get("programId")),
+      academicYear = String(form.get("academicYear")),
+      file = form.get("file"),
+      evaluationDate = String(form.get("evaluationDate") || "") || undefined,
+      notes = String(form.get("notes") || "");
+    if (!(file instanceof File)) return;
+    const existing = findExistingAPE(programId, academicYear);
+    if (existing?.submitted_date && !allowNewVersion) {
+      setPendingForm(form);
+      setDuplicate({ programId, year: academicYear });
+      return;
+    }
+    try {
+      uploadAPE(programId, academicYear, file, "primary", notes, userId, {
+        newVersion: allowNewVersion,
+        evaluationDate,
+      });
+      for (let i = 0; i < supportingCount; i++) {
+        const supportingFile = form.get(`supporting-${i}`);
+        if (supportingFile instanceof File && supportingFile.size) {
+          const label = String(form.get(`supporting-label-${i}`) || "Supporting Document");
+          uploadAPE(programId, academicYear, supportingFile, "supporting", label, userId);
+        }
+      }
+      setDuplicate(null);
+      setPendingForm(null);
+      onDone();
+    } catch (e) {
+      alert((e as Error).message);
+    }
+  }
+
+  if (duplicate)
+    return (
+      <div className="module-form">
+        <p>
+          An APE already exists for this program and academic year ({duplicate.year}).
+        </p>
+        <div className="inline-gap">
+          <button className="button" onClick={() => navigateToExisting(duplicate.programId, duplicate.year)}>
+            View Existing
+          </button>
+          <button
+            className="button primary"
+            onClick={() => pendingForm && submitPrimary(pendingForm, true)}
+          >
+            Upload New Version
+          </button>
+          <button
+            className="text-button"
+            onClick={() => {
+              setDuplicate(null);
+              setPendingForm(null);
+            }}
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    );
+
+  return (
+    <form
+      className="module-form"
+      onSubmit={(e) => {
+        e.preventDefault();
+        submitPrimary(new FormData(e.currentTarget));
+      }}
+    >
+      <label>
+        Program
+        <select name="programId" required defaultValue={scope[0]?.program_id}>
+          {scope.map((p) => (
+            <option key={p.program_id} value={p.program_id}>{shortName(p.name)}</option>
+          ))}
+        </select>
+      </label>
+      <label>
+        Academic Year
+        <select name="academicYear" required defaultValue={defaultYear || years[0]}>
+          {years.map((y) => <option key={y}>{y}</option>)}
+        </select>
+      </label>
+      <label>
+        APE Document
+        <input name="file" type="file" required accept=".pdf,.doc,.docx,.png,.jpg,.jpeg" />
+      </label>
+      <label>
+        Evaluation Date
+        <input name="evaluationDate" type="date" />
+      </label>
+      <label>
+        Notes
+        <textarea name="notes" maxLength={4000} />
+      </label>
+      <p className="form-hint">Supporting Documents (optional)</p>
+      {Array.from({ length: supportingCount }).map((_, i) => (
+        <div className="form-row" key={i}>
+          <label>
+            File
+            <input name={`supporting-${i}`} type="file" accept=".pdf,.doc,.docx,.png,.jpg,.jpeg" />
+          </label>
+          <label>
+            Document Type / Label
+            <input name={`supporting-label-${i}`} placeholder="Curriculum, survey summary, etc." maxLength={120} />
+          </label>
+        </div>
+      ))}
+      <button type="button" className="text-button" onClick={() => setSupportingCount((n) => n + 1)}>
+        + Add Another Supporting Document
+      </button>
+      <div className="inline-gap">
+        <button className="button primary">Upload APE</button>
+      </div>
+    </form>
   );
 }

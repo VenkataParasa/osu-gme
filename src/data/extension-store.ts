@@ -9,6 +9,7 @@ import type {
   DocumentMetadata,
   GrowthOpportunity,
   GrowthUpdate,
+  SWOTFinding,
 } from "./types";
 import {
   recruitmentFixture,
@@ -22,6 +23,8 @@ import {
   growthUpdateFixture,
   growthStatuses,
 } from "./demo-fixtures";
+import type { OutcomeUploadRun } from "./graduate-outcomes";
+import type { TraineeHealthUploadRun } from "./trainee-health";
 
 // v2 supplies actual demo cycles, applicants and outcomes; no older supplemental rows are appended.
 export const extensionState = {
@@ -35,9 +38,34 @@ export const extensionState = {
   operations: [] as typeof operationsFixture,
   leadership: [] as typeof leadershipFixture,
   growth: data.PROGRAM_HEALTH_METRIC.filter(m=>m.metric_category==='Opportunity').flatMap(m=>{
-    const a=data.PROGRAM_HEALTH_ASSESSMENT.find(a=>a.assessment_id===m.assessment_id);return a?[{id:m.metric_id,programId:a.program_id,title:String(m.metric_value),category:'Other',description:m.metric_name,status:'Identified',identifiedDate:a.assessment_date,targetDate:null,ownerLabel:'Program leadership',source:a.source,notes:m.notes,createdAt:a.created_at,updatedAt:a.created_at}]:[];
+    const a=data.PROGRAM_HEALTH_ASSESSMENT.find(a=>a.assessment_id===m.assessment_id);return a?[{id:m.metric_id,programId:a.program_id,title:String(m.metric_value),category:'Other',description:`Identified in the ${a.academic_year} program SWOT analysis.`,status:'Identified',identifiedDate:a.assessment_date,targetDate:null,ownerLabel:'Program leadership',source:a.source,notes:m.notes,createdAt:a.created_at,updatedAt:a.created_at,sourceType:a.assessment_type,sourcePeriod:a.academic_year,sourceFinding:String(m.metric_value)}]:[];
   }) as GrowthOpportunity[],
   growthUpdates: [] as GrowthUpdate[],
+  verifiedOutcomeUploads: new Set<string>(),
+  outcomeUploadRuns: [] as OutcomeUploadRun[],
+  traineeSurveyUploadRuns: [] as TraineeHealthUploadRun[],
+  addedTraineeMetrics: [] as {
+    metric_id: string;
+    assessment_id: string;
+    metric_category: string;
+    metric_name: string;
+    metric_value: number;
+    value_type: string;
+    unit: string;
+    notes: string;
+  }[],
+  addedTraineeAssessments: [] as {
+    assessment_id: string;
+    program_id: string;
+    academic_year: string;
+    assessment_type: string;
+    source: string;
+    assessment_date: string;
+    summary: string;
+    source_document_id: string | null;
+    created_at: string;
+  }[],
+  addedSWOTFindings: [] as SWOTFinding[],
 };
 let revision = 0;
 const listeners = new Set<() => void>();
@@ -157,6 +185,45 @@ export function addGrowthUpdate(
     previousStatus,
     status || previousStatus,
   );
+  notifyDataChanged();
+}
+export function recordSWOTFinding(
+  userId: string,
+  fields: {
+    programId: string;
+    academicYear: string;
+    category: SWOTFinding["category"];
+    finding: string;
+    source: string;
+  },
+) {
+  assertEdit(userId, fields.programId);
+  if (!fields.finding.trim() || !fields.academicYear)
+    throw new Error("Choose an academic year and enter the finding.");
+  const record: SWOTFinding = {
+    id: `SWF-DEMO-${crypto.randomUUID()}`,
+    programId: fields.programId,
+    academicYear: fields.academicYear,
+    category: fields.category,
+    finding: fields.finding.trim(),
+    source: fields.source.trim() || "Program SWOT (recorded by GME Office)",
+    assessmentDate: today(),
+  };
+  extensionState.addedSWOTFindings.push(record);
+  addActivity(
+    "SWOT_FINDING",
+    record.id,
+    fields.programId,
+    userId,
+    "SWOT Finding Recorded",
+    `${fields.category}: ${record.finding}`,
+  );
+  notifyDataChanged();
+  return record;
+}
+export function linkSWOTFindingToOpportunity(findingId: string, opportunityId: string) {
+  const finding = extensionState.addedSWOTFindings.find((f) => f.id === findingId);
+  if (finding) finding.linkedOpportunityId = opportunityId;
   notifyDataChanged();
 }
 export function saveReviewStatus(
@@ -315,6 +382,11 @@ export function uploadReviewDocument(
   );
   notifyDataChanged();
 }
+export function findExistingAPE(programId: string, year: string) {
+  return data.APE.find(
+    (a) => a.program_id === programId && a.academic_year === year,
+  );
+}
 export function uploadAPE(
   programId: string,
   year: string,
@@ -322,15 +394,22 @@ export function uploadAPE(
   kind: "primary" | "supporting",
   notes: string,
   userId: string,
+  options: { newVersion?: boolean; evaluationDate?: string } = {},
 ) {
   assertEdit(userId, programId);
   if (!/^\d{4}-\d{2}$/.test(year))
     throw new Error("Choose a valid academic year.");
-  let record = data.APE.find(
-    (a) => a.program_id === programId && a.academic_year === year,
-  );
+  let record = findExistingAPE(programId, year);
   if (kind === "supporting" && !record?.submitted_date)
     throw new Error("Upload the Annual Program Evaluation first.");
+  if (
+    kind === "primary" &&
+    record?.submitted_date &&
+    !options.newVersion
+  )
+    throw new Error(
+      "An APE already exists for this program and academic year. Choose “Upload New Version” to replace it, or view the existing record.",
+    );
   const id = record?.ape_id || `APE-DEMO-${crypto.randomUUID()}`;
   const doc = documentFromFile(
     file,
@@ -338,7 +417,7 @@ export function uploadAPE(
     id,
     userId,
     kind === "primary"
-      ? `Annual Program Evaluation ${year}`
+      ? `Annual Program Evaluation ${year}${options.newVersion ? ` (v${(record?.version || 1) + 1})` : ""}`
       : "Supporting documentation",
   );
   if (!record) {
@@ -350,13 +429,16 @@ export function uploadAPE(
       uploaded_by: null,
       status: "Not Submitted",
       notes: "",
+      version: 1,
     };
     data.APE.push(record);
   }
   if (kind === "primary") {
+    if (options.newVersion) record.version = (record.version || 1) + 1;
     record.submitted_date = today();
     record.uploaded_by = userId;
     record.status = "Submitted";
+    record.evaluation_date = options.evaluationDate || record.evaluation_date || null;
   }
   if (notes.trim()) record.notes = notes.trim();
   data.DOCUMENT.push(doc);
@@ -365,8 +447,13 @@ export function uploadAPE(
     id,
     programId,
     userId,
-    kind === "primary" ? "APE Uploaded" : "Supporting Document Added",
+    kind === "primary"
+      ? options.newVersion
+        ? "APE New Version Uploaded"
+        : "APE Uploaded"
+      : "Supporting Document Added",
     `${file.name}${notes.trim() ? ` · ${notes.trim()}` : ""}`,
   );
   notifyDataChanged();
+  return record;
 }

@@ -45,22 +45,8 @@ try {
     fullPage: true,
   });
   await go("integrations");
-  await page
-    .getByRole("button", { name: "Simulate NRMP Sync", exact: true })
-    .click();
-  await expect(page.getByRole("progressbar")).toBeVisible();
-  await expect(
-    page.getByRole("heading", { name: "NRMP Sync Details", exact: true }),
-  ).toBeVisible();
-  await expect(stat("Created")).toHaveText("3");
-  await expect(stat("Updated")).toHaveText("3");
-  await expect(
-    page.getByText(/unknown or mismatched program association/),
-  ).toBeVisible();
-  await go("recruitment");
-  await expect(stat("Applicant Records")).toHaveText("7");
-  await expect(stat("Recorded Matches")).toHaveText("4");
-  await expect(stat("OSU Student Match Rate")).toHaveText("50%");
+  await expect(card("NRMP")).toHaveCount(0);
+  await expect(card("New Innovations")).toBeVisible();
   await go("reports/recruitment");
   const downloaded = page.waitForEvent("download");
   await page

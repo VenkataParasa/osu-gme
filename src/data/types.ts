@@ -218,6 +218,10 @@ export interface AnnualEvaluation {
   reviewed_date?:string|null;
   reviewed_by?:string|null;
   review_notes?:string;
+  version?: number;
+  ape_cycle_id?: string;
+  submitted_on_time?: boolean;
+  evaluation_date?: string | null;
   ape_id: string;
   program_id: string;
   academic_year: string;
@@ -273,6 +277,23 @@ export interface GrowthOpportunity {
   notes: string;
   createdAt: string;
   updatedAt: string;
+  // Evidence trail: what kind of source produced this opportunity, the
+  // reporting period it came from, and the specific finding text, when known.
+  sourceType?: string;
+  sourcePeriod?: string;
+  sourceFinding?: string;
+  expectedBenefit?: string;
+  successMeasure?: string;
+}
+export interface SWOTFinding {
+  id: string;
+  programId: string;
+  academicYear: string;
+  category: "Strength" | "Weakness" | "Opportunity" | "Threat";
+  finding: string;
+  source: string;
+  assessmentDate: string;
+  linkedOpportunityId?: string;
 }
 export interface GrowthUpdate {
   id: string;

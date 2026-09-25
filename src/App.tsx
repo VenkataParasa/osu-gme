@@ -29,6 +29,11 @@ import {
   ArrowUp,
   ArrowDown,
   Upload,
+  Award,
+  HeartPulse,
+  Briefcase,
+  TrendingUp,
+  History,
 } from "lucide-react";
 import {
   data,
@@ -86,10 +91,20 @@ const Integrations = lazy(() => import("./components/Integrations"));
 const ProgramHealth = lazy(() => import("./components/ProgramHealth"));
 const ReportingAnalytics = lazy(() => import("./components/ReportingAnalytics"));
 const DutyHours = lazy(() => import("./components/DutyHours"));
+const GraduateOutcomes = lazy(() => import("./components/GraduateOutcomes"));
+const TraineeHealth = lazy(() => import("./components/TraineeHealth"));
+const FacultyWorkforce = lazy(() => import("./components/FacultyWorkforce"));
+const GrowthOpportunities = lazy(() => import("./components/GrowthOpportunities"));
+const HistoricalAnalysis = lazy(() => import("./components/HistoricalAnalysis"));
 
 const pages = [
   { id: "overview", label: "Overview", icon: LayoutDashboard },
   { id: "health", label: "Program Health", icon: Activity },
+  { id: "graduate-outcomes", label: "Graduate Outcomes", icon: Award },
+  { id: "trainee-health", label: "Trainee Health", icon: HeartPulse },
+  { id: "faculty-workforce", label: "Faculty & Workforce", icon: Briefcase },
+  { id: "growth", label: "Growth Opportunities", icon: TrendingUp },
+  { id: "historical-analysis", label: "Historical Analysis", icon: History },
   { id: "analytics", label: "Reporting & Analytics", icon: FileText },
   { id: "duty-hours", label: "Duty-Hour Compliance", icon: Clock3 },
   { id: "programs", label: "Dashboard", icon: ChartNoAxesCombined },
@@ -1930,6 +1945,46 @@ export default function App() {
             />
           ) : page === "analytics" ? (
             <ReportingAnalytics
+              userId={userId}
+              path={route.path}
+              params={params}
+              navigate={navigate}
+              toast={setToast}
+            />
+          ) : page === "graduate-outcomes" ? (
+            <GraduateOutcomes
+              userId={userId}
+              path={route.path}
+              params={params}
+              navigate={navigate}
+              toast={setToast}
+            />
+          ) : page === "trainee-health" ? (
+            <TraineeHealth
+              userId={userId}
+              path={route.path}
+              params={params}
+              navigate={navigate}
+              toast={setToast}
+            />
+          ) : page === "faculty-workforce" ? (
+            <FacultyWorkforce
+              userId={userId}
+              path={route.path}
+              params={params}
+              navigate={navigate}
+              toast={setToast}
+            />
+          ) : page === "growth" ? (
+            <GrowthOpportunities
+              userId={userId}
+              path={route.path}
+              params={params}
+              navigate={navigate}
+              toast={setToast}
+            />
+          ) : page === "historical-analysis" ? (
+            <HistoricalAnalysis
               userId={userId}
               path={route.path}
               params={params}

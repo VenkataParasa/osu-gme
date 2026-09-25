@@ -5,10 +5,12 @@ import {
   type RecruitmentDataProvider,
 } from "./integration-providers";
 import { capacityFixtures, demoPolicy } from "./demo-fixtures";
+import { getProgramsByCollege } from "./colleges";
 import type { Applicant, ReviewAction } from "./types";
 export interface RecruitmentFilters {
   year?: string;
   program?: string;
+  college?: string;
   degree?: string;
   outcome?: string;
   from?: string;
@@ -19,12 +21,31 @@ export const recruitmentYears = () =>
   [...new Set(data.RECRUITMENT_CYCLE.map((c) => c.application_year))].sort(
     (a, b) => b - a,
   );
+export function defaultRecruitmentYear(userId: string, programId = "") {
+  const scope = new Set(allowedPrograms(userId).map((p) => p.program_id));
+  const cycles = data.RECRUITMENT_CYCLE.filter(
+    (c) => scope.has(c.program_id) && (!programId || c.program_id === programId),
+  ).sort((a, b) => b.application_year - a.application_year);
+  const outcomes = new Set(
+    data.MATCH_OUTCOME.map((m) => `${m.program_id}:${m.applicant_id}`),
+  );
+  const cyclesWithOutcomes = new Set(
+    data.APPLICANT.filter((a) => {
+      const cycle = cycles.find((c) => c.cycle_id === a.cycle_id);
+      return cycle && outcomes.has(`${cycle.program_id}:${a.applicant_id}`);
+    }).map((a) => a.cycle_id),
+  );
+  return (
+    cycles.find((c) => c.status === "Closed" && cyclesWithOutcomes.has(c.cycle_id))
+      ?.application_year ?? cycles[0]?.application_year ?? recruitmentYears()[0]
+  );
+}
 export function applicantRows(
   userId: string,
   f: RecruitmentFilters = {},
   provider: RecruitmentDataProvider = new JsonRecruitmentProvider(),
 ) {
-  const scope = new Set(allowedPrograms(userId).map((p) => p.program_id));
+  const scope = new Set(getProgramsByCollege(userId, f.college).map((p) => p.program_id));
   return provider.getApplicants().flatMap((applicant) => {
     const cycle = data.RECRUITMENT_CYCLE.find(
       (c) => c.cycle_id === applicant.cycle_id,
@@ -64,7 +85,7 @@ export function applicantRows(
 }
 export function recruitmentSummary(userId: string, f: RecruitmentFilters) {
   const applicants = applicantRows(userId, f),
-    scope = allowedPrograms(userId).filter(
+    scope = getProgramsByCollege(userId, f.college).filter(
       (p) => !f.program || p.program_id === f.program,
     );
   const programs = scope.map((program) => {
@@ -220,8 +241,9 @@ export function apeRows(
   year: string,
   programId = "",
   status = "",
+  collegeId = "",
 ) {
-  return allowedPrograms(userId)
+  return getProgramsByCollege(userId, collegeId)
     .filter((p) => !programId || p.program_id === programId)
     .map((program) => {
       const record = data.APE.find(

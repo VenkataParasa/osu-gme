@@ -21,6 +21,7 @@ import {
   type ModuleProps,
 } from "./module-shared";
 import {
+  data,
   allowedPrograms,
   shortName,
   percent,
@@ -31,6 +32,7 @@ import {
   applicantRows,
   recruitmentSummary,
   recruitmentYears,
+  defaultRecruitmentYear,
   cohortSummary,
   recruitmentTrend,
   demographicGroups,
@@ -48,10 +50,18 @@ export default function Recruitment({
     section = report ? "report" : path.split("/")[1] || "overview",
     detail = section === "program" ? path.split("/")[2] : undefined;
   const scope = allowedPrograms(userId),
-    year = params.get("year") || String(recruitmentYears()[0]);
+    program = detail || params.get("program") || "",
+    year = params.get("year") || String(defaultRecruitmentYear(userId, program));
+  const selectedCycles = data.RECRUITMENT_CYCLE.filter(
+    (c) => String(c.application_year) === year &&
+      scope.some((p) => p.program_id === c.program_id) &&
+      (!program || c.program_id === program),
+  );
+  const openCycle = selectedCycles.length > 0 &&
+    selectedCycles.every((c) => c.status.startsWith("Open"));
   const filters = {
     year: section === "history" ? "" : year,
-    program: detail || params.get("program") || "",
+    program,
     degree: params.get("degree") || "",
     outcome: params.get("outcome") || "",
     from: params.get("from") || "",
@@ -279,6 +289,9 @@ export default function Recruitment({
         </button>
       </div>
       <div className="module-notice">
+        {section !== "history" && (openCycle
+          ? `The ${year} cycle is in progress. Rankings and Match outcomes are not yet available for all applicants. Select an earlier Match Year to view completed results. `
+          : `Showing ${year} Match results. `)}
         Positions are supplied by recruitment cycles. Open cycles may have no recorded outcomes yet. “Not Matched to Program” does not mean unmatched nationally. Historical pool and mix comparisons are available in Reporting & Analytics → Recruitment Trends.
       </div>
       <Stats

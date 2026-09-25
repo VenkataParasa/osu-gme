@@ -1,16 +1,17 @@
-import {data,allowedPrograms,academicYear,percent,programName,residentName,authorName,canEdit} from './repository';
+import {data,academicYear,percent,programName,residentName,authorName,canEdit} from './repository';
 import {extensionState,addActivity,notifyDataChanged} from './extension-store';
 import {deadlineState,apeRows,applicantRows} from './extension-selectors';
+import {getProgramsByCollege} from './colleges';
 export type Value=string|number|null|undefined;
 export interface ReportTable {title:string;description:string;headers:string[];rows:Value[][];links?:string[]}
-export interface ReportFilters {year?:string;program?:string;category?:string;from?:string;to?:string}
+export interface ReportFilters {year?:string;program?:string;college?:string;category?:string;from?:string;to?:string}
 export const reportDefinitions=[['annual','Annual Institutional Report'],['board','Board Pass Rate Analysis'],['graduates','Graduate Outcomes Report'],['scholarly','Scholarly Activity Report'],['accreditation','Accreditation Metrics Report'],['health','Residency Program Health Report'],['trainee','Trainee Outcomes Report'],['faculty','Faculty & Workforce Report'],['growth','Growth Opportunities Report'],['risk','Institutional Attention Report'],['concerns','Concern Tracks & Resolution'],['recruitment','Recruitment Trends']] as const;
 export const reportYears=()=>[...new Set([...data.APE.map(a=>a.academic_year),...data.BOARD_PASS_METRIC.map(b=>`${b.reporting_year-1}-${String(b.reporting_year).slice(2)}`),...data.RECRUITMENT_HISTORY_SUMMARY.map(r=>`${r.application_year-1}-${String(r.application_year).slice(2)}`)])].sort().reverse();
 const endYear=(year:string)=>Number(year.slice(0,4))+1;
 const yearMatches=(y:number,f:ReportFilters)=>!f.year||y===endYear(f.year);
 const dayDiff=(end:string,start:string)=>Math.round((Date.parse(end.slice(0,10)+'T12:00:00Z')-Date.parse(start.slice(0,10)+'T12:00:00Z'))/86400000);
 export function graduates(userId:string,f:ReportFilters={}){
- const scope=new Set(allowedPrograms(userId).filter(p=>!f.program||p.program_id===f.program).map(p=>p.program_id));
+ const scope=new Set(getProgramsByCollege(userId,f.college).filter(p=>!f.program||p.program_id===f.program).map(p=>p.program_id));
  return data.GRADUATE_OUTCOME.filter(g=>scope.has(g.program_id)&&yearMatches(g.graduation_year,f)&&(!f.category||g.outcome_type===f.category));
 }
 export function graduatePercentages(rows:ReturnType<typeof graduates>){
@@ -23,7 +24,7 @@ export function graduatePercentages(rows:ReturnType<typeof graduates>){
  ].map(m=>({...m,rate:m.denominator?m.numerator/m.denominator:null}));
 }
 export function reportTables(userId:string,id:string,f:ReportFilters={}):ReportTable[]{
- const programs=allowedPrograms(userId).filter(p=>!f.program||p.program_id===f.program),scope=new Set(programs.map(p=>p.program_id));
+ const programs=getProgramsByCollege(userId,f.college).filter(p=>!f.program||p.program_id===f.program),scope=new Set(programs.map(p=>p.program_id));
  const period=(value:string)=>!f.year||value===f.year;
  const board=data.BOARD_PASS_METRIC.filter(b=>scope.has(b.program_id)&&yearMatches(b.reporting_year,f));
  const reviews=data.SPECIAL_REVIEW.filter(r=>scope.has(r.program_id));
@@ -53,7 +54,7 @@ export function reportTables(userId:string,id:string,f:ReportFilters={}):ReportT
  return [{title:'Annual Program Portfolio',description:'Programs are the current portfolio; trainee count is the resident cohort overlapping July–June, not a graduation or attrition rate.',headers:['Program','Type','Specialty','Trainees in Period','Complement','Accreditation'],rows:programs.map(p=>[p.name,p.type,p.specialty,data.RESIDENT.filter(r=>r.program_id===p.program_id&&(!f.year||(r.start_date<=`${endYear(f.year)}-06-30`&&r.graduation_date>=`${f.year.slice(0,4)}-07-01`))).length,p.slot_count,p.accreditation_status]),links:programs.map(p=>`programs/${p.program_id}`)},boardTable,...recruitmentTables(userId,f).slice(0,1),...graduateTables.slice(0,2),...scholarship.slice(0,1),...accreditation,survey,facultyTable,growth];
 }
 export function recruitmentTables(userId:string,f:ReportFilters={}):ReportTable[]{
- const scope=new Set(allowedPrograms(userId).filter(p=>!f.program||p.program_id===f.program).map(p=>p.program_id));
+ const scope=new Set(getProgramsByCollege(userId,f.college).filter(p=>!f.program||p.program_id===f.program).map(p=>p.program_id));
  const cycles=data.RECRUITMENT_CYCLE.filter(c=>scope.has(c.program_id)&&yearMatches(c.application_year,f));
  const all=applicantRows(userId,{program:f.program});
  const byCycle=new Map<string,typeof all>();for(const a of all){const rows=byCycle.get(a.cycle_id)||[];rows.push(a);byCycle.set(a.cycle_id,rows)}

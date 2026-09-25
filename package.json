@@ -10,16 +10,18 @@
     "test": "tsx --test tests/*.test.ts",
     "format": "prettier --write src/**/*.ts src/**/*.tsx src/*.tsx src/styles.css tests/*.ts tests/*.mjs vite.config.ts",
     "test:browser": "node tests/browser-check.mjs",
-    "test:extensions": "node tests/extensions-check.mjs"
-    ,"test:health": "node tests/program-health-check.mjs"
+    "test:extensions": "node tests/extensions-check.mjs",
+    "test:health": "node tests/program-health-check.mjs"
   },
   "dependencies": {
+    "@duckdb/duckdb-wasm": "^1.33.1-dev57.0",
     "lucide-react": "^0.468.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "recharts": "^3.1.0"
   },
   "devDependencies": {
+    "@duckdb/node-api": "^1.5.5-r.5",
     "@playwright/test": "^1.55.0",
     "@types/node": "^22.0.0",
     "@types/react": "^19.1.0",

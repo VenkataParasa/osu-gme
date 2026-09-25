@@ -1,7 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {programHealthSnapshot,institutionalHealth,attentionItems,growthRows,healthComparison,leadershipTenure} from '../src/data/program-health-selectors';
-import {addGrowthUpdate,saveGrowthOpportunity,extensionState} from '../src/data/extension-store';
+import { readFileSync } from 'node:fs';
+import { data } from '../src/data/repository';
+
+Object.assign(data, JSON.parse(readFileSync(
+  new URL('../public/data/gme-demo-v2.json', import.meta.url), 'utf8',
+)));
+const {programHealthSnapshot,institutionalHealth,attentionItems,growthRows,healthComparison} = await import('../src/data/program-health-selectors');
+const {addGrowthUpdate,saveGrowthOpportunity,extensionState} = await import('../src/data/extension-store');
+const {facultyWorkforceRows} = await import('../src/data/faculty-workforce');
 
 test('Program Health aggregates source-linked indicators without a composite score',()=>{
  const snapshot=programHealthSnapshot('USR-004','PRG-004','2025-26');
@@ -12,7 +19,7 @@ test('Program Health aggregates source-linked indicators without a composite sco
  assert.equal(snapshot.indicators.some(i=>i.label==='Health Score'),false);
  assert.ok(institutionalHealth('USR-006').every(s=>s.program?.program_id==='PRG-001'));
  assert.ok(attentionItems('USR-004').every(i=>i.sourcePath));
- assert.equal(leadershipTenure(extensionState.leadership[0]),'4y 2m');
+ assert.equal(facultyWorkforceRows('USR-004',{program:'PRG-001',year:'2019-20'})[0]?.aggregate.program_director_tenure_years,3);
 });
 test('growth records are role-scoped and preserve update history',()=>{
  const before=extensionState.growthUpdates.length;

@@ -12,6 +12,8 @@ import {
 import { extensionState } from "./extension-store";
 import { recruitmentSummary } from "./extension-selectors";
 import { deadlineState } from "./extension-selectors";
+import { traineeHealthRows, metricStatus } from "./trainee-health";
+import { facultyWorkforceRows, tenureStatus } from "./faculty-workforce";
 
 export type HealthDomain =
   | "Accreditation"
@@ -47,24 +49,11 @@ export const healthYears = () =>
   [
     ...new Set([
       ...data.DUTY_HOUR_COMPLIANCE.map((d) => d.academic_period.slice(0, 7)),
-      ...extensionState.traineeSurveys.map((s) => s.academicYear),
+      ...data.PROGRAM_HEALTH_ASSESSMENT.map((a) => a.academic_year),
     ]),
   ]
     .sort()
     .reverse();
-const within = (id: string) =>
-  extensionState.leadership.filter((l) => l.programId === id);
-export function leadershipTenure(record: ReturnType<typeof within>[number]) {
-  const end = new Date(record.endDate || new Date()),
-    start = new Date(record.startDate),
-    months = Math.max(
-      0,
-      (end.getFullYear() - start.getFullYear()) * 12 +
-        end.getMonth() -
-        start.getMonth(),
-    );
-  return `${Math.floor(months / 12)}y ${months % 12}m`;
-}
 export function programHealthIndicators(
   userId: string,
   programId: string,
@@ -87,9 +76,9 @@ export function programHealthIndicators(
     (a) => a.program_id === programId && a.academic_year === year,
   );
   const duty = latestDuty(programId, year);
-  const survey = extensionState.traineeSurveys.find(
-    (s) => s.programId === programId && s.academicYear === year,
-  );
+  const survey = traineeHealthRows(userId, { program: programId, year })[0];
+  const wellbeing = survey?.metrics.find((m) => m.name === "Wellbeing index");
+  const responseRate = survey?.metrics.find((m) => m.name === "Survey response rate");
   const operation = extensionState.operations.find(
     (o) => o.programId === programId && o.academicYear === year,
   );
@@ -97,13 +86,8 @@ export function programHealthIndicators(
     program: programId,
     year: year.slice(0, 4),
   }).programs[0];
-  const leadership = within(programId);
-  const currentLeadership = leadership.filter(
-    (l) => !l.endDate && l.category === "Program Leadership",
-  );
-  const changed =
-    leadership.some((l) => l.endDate && academicYear(l.endDate) === year) ||
-    leadership.some((l) => l.startDate.startsWith(year.slice(0, 4)));
+  const faculty = facultyWorkforceRows(userId, { program: programId, year })[0];
+  const changed = !!faculty?.aggregate.leadership_change_this_year;
   const growth = extensionState.growth.filter(
     (g) =>
       g.programId === programId &&
@@ -178,13 +162,13 @@ export function programHealthIndicators(
       programId,
       domain: "Trainees",
       label: "Aggregate trainee survey",
-      value: survey
-        ? `${survey.responses} / ${survey.eligible} responses (${percent(survey.responses / survey.eligible)})`
+      value: wellbeing
+        ? `Wellbeing index ${wellbeing.value}${responseRate ? ` · ${percent(responseRate.value)} response rate` : ""}`
         : "No survey data",
-      status: survey ? "On Track" : "No Data",
-      source: survey?.source || "Institutional Survey · Demo",
-      sourcePath: `health/${programId}/trainees`,
-      updated: survey?.surveyedAt,
+      status: wellbeing ? (metricStatus("Wellbeing index", wellbeing.value) as HealthStatus | undefined) || "On Track" : "No Data",
+      source: survey?.source || "Institutional Survey",
+      sourcePath: `trainee-health?program=${programId}`,
+      updated: survey?.assessmentDate,
     },
     {
       id: `board-${programId}`,
@@ -241,19 +225,16 @@ export function programHealthIndicators(
       id: `leadership-${programId}`,
       programId,
       domain: "Leadership",
-      label: "Current leadership",
-      value: currentLeadership.length
-        ? currentLeadership.map((l) => l.role).join(", ")
+      label: "Program Director tenure",
+      value: faculty
+        ? `${faculty.aggregate.program_director_tenure_years} yrs (${tenureStatus(faculty.aggregate.program_director_tenure_years)})`
         : "No leadership record",
-      status: currentLeadership.length
-        ? changed
-          ? "Change"
-          : "On Track"
-        : "No Data",
-      source: "Internal GME · Demo",
-      sourcePath: `health/${programId}/leadership`,
+      status: faculty ? (changed ? "Change" : "On Track") : "No Data",
+      source: faculty?.aggregate.source || "Faculty & Leadership Aggregate",
+      sourcePath: `faculty-workforce?program=${programId}`,
+      updated: faculty?.aggregate.uploaded_at,
       reason: changed
-        ? "A leadership start or end is recorded in this reporting year."
+        ? "A leadership change is recorded for this reporting year."
         : undefined,
     },
     {

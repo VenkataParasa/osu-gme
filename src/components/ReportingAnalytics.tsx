@@ -13,13 +13,9 @@ import {
   data,
   allowedPrograms,
   shortName,
-  percent,
-  latestBoard,
-  latestDuty,
   programName,
 } from "../data/repository";
 import {
-  recruitmentSummary,
   reviewRows,
   apeRows,
 } from "../data/extension-selectors";
@@ -29,6 +25,9 @@ import {
   growthRows,
   healthYears,
 } from "../data/program-health-selectors";
+import { getAuthorizedColleges, collegeIdForProgram } from "../data/colleges";
+import { reportTables, reportYears, type ReportFilters } from "../data/v2-reporting";
+import { historicalReportMetadata } from "../data/historical-analysis";
 const definitions = [
   [
     "annual",
@@ -83,7 +82,10 @@ export default function ReportingAnalytics({
   const view = path.split("/")[1] || "overview",
     year = params.get("year") || healthYears()[0] || "2025-26",
     program = params.get("program") || "",
-    scope = allowedPrograms(userId);
+    college = params.get("college") || "",
+    scope = allowedPrograms(userId),
+    colleges = getAuthorizedColleges(userId),
+    programsInScope = college ? scope.filter((p) => collegeIdForProgram(p) === college) : scope;
   const [runs, setRuns] = useState<
     { name: string; at: string; scope: string }[]
   >([]);
@@ -102,7 +104,7 @@ export default function ReportingAnalytics({
       {
         name,
         at: new Date().toISOString(),
-        scope: program ? programName(program) : "Authorized programs",
+        scope: program ? programName(program) : college ? colleges.find((c) => c.id === college)?.name || "College" : "Authorized programs",
       },
       ...x,
     ]);
@@ -117,10 +119,17 @@ export default function ReportingAnalytics({
         onChange={(v) => filter("year", v)}
       />
       <FilterSelect
+        label="College"
+        value={college}
+        all="All Colleges (Institution)"
+        options={colleges.map((c) => ({ value: c.id, label: c.shortName }))}
+        onChange={(v) => navigate(path, { ...Object.fromEntries(params), college: v, program: "" })}
+      />
+      <FilterSelect
         label="Program"
         value={program}
-        all="All Assigned Programs"
-        options={scope.map((p) => ({
+        all="All Programs in Scope"
+        options={programsInScope.map((p) => ({
           value: p.program_id,
           label: shortName(p.name),
         }))}
@@ -148,7 +157,7 @@ export default function ReportingAnalytics({
                   className="text-button"
                   onClick={() => {
                     run(name);
-                    navigate(`analytics/report/${id}`, { year, program });
+                    navigate(`analytics/report/${id}`, { year, program, college });
                   }}
                 >
                   Run Report →
@@ -162,92 +171,66 @@ export default function ReportingAnalytics({
   if (view === "report") {
     const id = path.split("/")[2] || "annual",
       def = definitions.find((d) => d[0] === id) || definitions[0];
+    const f: ReportFilters = { year, program, college };
+    const tables = reportTables(userId, id, f);
+    const metadata = historicalReportMetadata(userId, {
+      college,
+      program,
+      fromYear: year,
+      toYear: year,
+    });
     return (
       <>
         <ModuleHeading
           eyebrow="Generated Report"
           title={def[1]}
-          description={`OSU-CHS Graduate Medical Education · ${year} · security-trimmed to ${program ? shortName(programName(program)) : "authorized programs"}`}
+          description={`OSU-CHS Graduate Medical Education · ${year} · security-trimmed to ${program ? shortName(programName(program)) : college ? colleges.find((c) => c.id === college)?.shortName : "authorized programs"}`}
         >
-          <ExportButton
-            name={id + "-report"}
-            headers={[
-              "Program",
-              "Accreditation",
-              "Trainees",
-              "Operations",
-              "Recruitment",
-              "Leadership",
-              "Growth",
-              "Attention",
-            ]}
-            rows={row}
-          />
+          {!!tables[0] && (
+            <ExportButton name={`${id}-report`} headers={tables[0].headers} rows={tables[0].rows} />
+          )}
         </ModuleHeading>
         {filters}
-        <Stats
-          items={[
-            { label: "Programs in Scope", value: health.length },
-            {
-              label: "Active Special Reviews",
-              value: reviewRows(userId, { program }).filter(
-                (r) => r.review.status !== "Closed",
-              ).length,
-            },
-            {
-              label: "Attention Indicators",
-              value: attentionItems(userId, year).filter(
-                (x) => !program || x.programId === program,
-              ).length,
-            },
-            {
-              label: "Open Growth Opportunities",
-              value: growthRows(userId, { program }).filter(
-                (g) => !["Completed", "Deferred"].includes(g.status),
-              ).length,
-            },
-          ]}
-        />
-        <Card
-          title="Report Results"
-          subtitle="Source-linked, explainable indicators; no composite health score"
-        >
-          <DataTable
-            headers={[
-              "Program",
-              "Accreditation",
-              "Trainees",
-              "Operations",
-              "Recruitment",
-              "Leadership",
-              "Growth",
-              "Attention",
+        <Card title="Report Scope & Metadata" subtitle="Preserved on export">
+          <Stats
+            items={[
+              { label: "Scope", value: metadata.scope },
+              { label: "College", value: metadata.collegeName || "Not applicable" },
+              { label: "Program", value: metadata.programName || "Not applicable" },
+              { label: "Reporting Period", value: year },
+              { label: "Generated At", value: metadata.generatedAt },
+              { label: "Data As Of", value: metadata.dataAsOf },
             ]}
-            empty={!row.length}
-          >
-            {row.map((r) => (
-              <tr key={String(r[0])}>
-                {r.map((v, i) => (
-                  <td key={i}>
-                    {i > 0 && i < 7 ? <Badge>{String(v)}</Badge> : v}
-                  </td>
-                ))}
-              </tr>
-            ))}
-          </DataTable>
+          />
         </Card>
-        <Card
-          title="Traceability"
-          subtitle="Data As Of: current mock-session state"
-        >
-          <p className="form-hint">
-            Board data comes from Specialty Board Reports; duty-hour and
-            scholarly import context from simulated New Innovations; recruitment
-            from the Recruitment Repository; reviews, APEs and growth from
-            Internal GME. Drill into a program from the table through Program
-            Health.
-          </p>
-        </Card>
+        {tables.map((table, ti) => (
+          <Card key={ti} title={table.title} subtitle={table.description} action={<ExportButton name={`${id}-${ti}`} headers={table.headers} rows={table.rows} />}>
+            <DataTable headers={table.headers} empty={!table.rows.length}>
+              {table.rows.map((r, ri) => (
+                <tr key={ri}>
+                  {r.map((v, ci) =>
+                    ci === 0 && table.links?.[ri] ? (
+                      <td key={ci}>
+                        <button
+                          className="text-button"
+                          onClick={() => {
+                            const [p, q] = table.links![ri].split("?");
+                            navigate(p, Object.fromEntries(new URLSearchParams(q || "")));
+                          }}
+                        >
+                          {String(v ?? "Not available")}
+                        </button>
+                      </td>
+                    ) : (
+                      <td key={ci}>{v ?? "Not available"}</td>
+                    ),
+                  )}
+                </tr>
+              ))}
+            </DataTable>
+          </Card>
+        ))}
+        {!tables.length && <Empty>No records match the selected filters.</Empty>}
       </>
     );
   }
@@ -312,7 +295,7 @@ export default function ReportingAnalytics({
                 <button
                   className="text-button"
                   onClick={() =>
-                    navigate(`analytics/report/${id}`, { year, program })
+                    navigate(`analytics/report/${id}`, { year, program, college })
                   }
                 >
                   Open →
