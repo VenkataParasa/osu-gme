@@ -19,7 +19,7 @@ export default function Integrations({ userId, navigate, toast }: ModuleProps) {
     return (
       <Empty>
         Integration operations and institutional sync history are available to
-        institutional demo roles.
+        institutional roles.
       </Empty>
     );
   const run = extensionState.syncRuns.find((r) => r.id === selected);
@@ -28,15 +28,15 @@ export default function Integrations({ userId, navigate, toast }: ModuleProps) {
       <ModuleHeading
         eyebrow="Administration"
         title="Integration Center"
-        description="Demonstration connectors using local fixtures. No external services are contacted."
+        description="Manage integrations and review synchronization activity."
       />
       <div className="module-notice">
-        New Innovations represents a planned integration; its production
-        transport mechanism is not yet defined.
+        New Innovations provides program compliance results for centralized
+        oversight.
       </div>
       <div className="module-filters">
         <label className="module-filter">
-          <span>Simulation Scenario</span>
+          <span>Sync Scenario</span>
           <select
             value={scenario}
             onChange={(e) =>
@@ -44,7 +44,7 @@ export default function Integrations({ userId, navigate, toast }: ModuleProps) {
             }
           >
             <option value="normal">Apply Payload (With Validation)</option>
-            <option value="failure">Demonstrate Source Failure</option>
+            <option value="failure">Source Unavailable</option>
           </select>
         </label>
       </div>
@@ -55,10 +55,10 @@ export default function Integrations({ userId, navigate, toast }: ModuleProps) {
             <Card
               key={provider.name}
               title={provider.name}
-              subtitle="Received Program Compliance Results · Mock Connector"
+              subtitle="Received Program Compliance Results"
             >
               <div className="integration-content">
-                <Badge tone="blue">Simulated Integration</Badge>
+                <Badge tone="blue">Integration Ready</Badge>
                 <dl>
                   <div>
                     <dt>Last Successful Sync</dt>
@@ -82,7 +82,7 @@ export default function Integrations({ userId, navigate, toast }: ModuleProps) {
                   </div>
                   <div>
                     <dt>Last Result</dt>
-                    <dd>{status.lastAttempt?.status || "Ready to simulate"}</dd>
+                    <dd>{status.lastAttempt?.status || "Ready to sync"}</dd>
                   </div>
                   <div>
                     <dt>Records Received</dt>
@@ -104,16 +104,16 @@ export default function Integrations({ userId, navigate, toast }: ModuleProps) {
                     }
                   }}
                 >
-                  Simulate {provider.name} Sync
+                  Run {provider.name} Sync
                 </button>
                 {status.busy && (
                   <div className="sync-progress" role="status">
-                    <progress aria-label="Simulated sync in progress" />
+                    <progress aria-label="Sync in progress" />
                     <p>{extensionState.progress}</p>
                   </div>
                 )}
                 <p className="form-hint">
-                  Imports a prepared General Surgery compliance result. No
+                  Imports the latest General Surgery compliance result. No
                   duty-hour logs or calculations are created.
                 </p>
               </div>
@@ -136,7 +136,7 @@ export default function Integrations({ userId, navigate, toast }: ModuleProps) {
       </Card>
       {/* <Card
         title="Sync History"
-        subtitle="Runs retained for this browser session"
+        subtitle="Runs retained for this session"
       >
         <DataTable
           headers={[

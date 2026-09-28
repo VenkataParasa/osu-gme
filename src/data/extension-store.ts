@@ -85,11 +85,11 @@ export function useDataRevision() {
 export const today = () => new Date().toLocaleDateString("en-CA");
 export function assertEdit(userId: string, programId: string) {
   if (!canEdit(userId, programId))
-    throw new Error("Your demo role cannot edit this program.");
+    throw new Error("Your role cannot edit this program.");
 }
 export function assertSync(userId: string) {
   if (!["ROL-01", "ROL-02"].includes(userRole(userId)?.role_id || ""))
-    throw new Error("Institutional demo roles can run simulated integrations.");
+    throw new Error("Institutional roles can run integrations.");
 }
 export function addActivity(
   entityType: string,

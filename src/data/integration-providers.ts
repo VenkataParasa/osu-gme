@@ -53,7 +53,7 @@ abstract class MockProvider implements IntegrationProvider {
   async sync(userId: string, scenario: "normal" | "failure" = "normal") {
     assertSync(userId);
     if (extensionState.busyProvider)
-      throw new Error("A simulated sync is already running.");
+      throw new Error("A sync is already running.");
     const run: SyncRun = {
       id: crypto.randomUUID(),
       provider: this.name,
@@ -78,7 +78,7 @@ abstract class MockProvider implements IntegrationProvider {
       }
       if (scenario === "failure")
         throw new Error(
-          "Demo failure fixture: source payload is unavailable. No records were changed.",
+          "The source payload is unavailable. No records were changed.",
         );
       this.apply(run);
       run.status = run.warnings.length
@@ -114,7 +114,7 @@ export class MockNRMPProvider extends MockProvider {
   name = "NRMP";
   academicYear = "2027";
   steps = [
-    "Connecting to simulated NRMP source…",
+    "Connecting to NRMP…",
     "Receiving recruitment data…",
     "Validating records and matching programs…",
     "Processing rankings and Match outcomes…",
@@ -223,7 +223,7 @@ export class MockNewInnovationsProvider
   name = "New Innovations";
   academicYear = "2026-27";
   steps = [
-    "Connecting to simulated New Innovations source…",
+    "Connecting to New Innovations…",
     "Receiving configured compliance results…",
     "Validating program associations…",
     "Updating received compliance information…",

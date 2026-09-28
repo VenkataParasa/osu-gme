@@ -124,7 +124,7 @@ export default function Recruitment({
           a.last_name.localeCompare(b.last_name),
   );
   if (detail && !scope.some((p) => p.program_id === detail))
-    return <Empty>Program not found or outside your demo role’s scope.</Empty>;
+    return <Empty>Program not found or outside your access scope.</Empty>;
   function programTable() {
     return (
       <DataTable headers={programHeaders} empty={!summary.programs.length}>
@@ -364,7 +364,7 @@ export default function Recruitment({
                     (l) =>
                       l.recordId === a.applicant_id ||
                       l.recordId === a.match?.match_id,
-                  ) && <small>NRMP simulation</small>}
+                  ) && <small>Imported record</small>}
                 </td>
               </tr>
             ))}

@@ -78,18 +78,18 @@ const downloadEvent = page.waitForEvent("download");
 await page.getByRole("button", { name: "Export CSV", exact: true }).click();
 const download = await downloadEvent;
 assert.equal(download.suggestedFilename(), "gme-concern-report.csv");
-await page.getByLabel("Demo user role").selectOption("USR-006");
+await page.getByLabel("User role").selectOption("USR-006");
 await page.getByRole("heading", { name: "Institutional Overview" }).waitFor();
 await page.locator("nav").getByText("Dashboard", { exact: true }).click();
 await expect(page.locator("tbody tr")).toHaveCount(1);
 await page.goto("http://localhost:5173/#concerns/CON-0008");
 await page
-  .getByText("Concern not found or outside your demo role’s scope.")
+  .getByText("Concern not found or outside your access scope.")
   .waitFor();
-await page.getByLabel("Demo user role").selectOption("USR-001");
+await page.getByLabel("User role").selectOption("USR-001");
 await page.goto("http://localhost:5173/#concerns/CON-0008");
-await page.getByText(/This demo role has read-only access/).waitFor();
-await page.getByLabel("Demo user role").selectOption("USR-004");
+await page.getByText(/This role has read-only access/).waitFor();
+await page.getByLabel("User role").selectOption("USR-004");
 await page.locator("nav").getByText("Resident Concerns").click();
 await page.getByRole("button", { name: "New concern" }).click();
 await page.getByLabel("Resident", { exact: true }).selectOption("RES-0001");

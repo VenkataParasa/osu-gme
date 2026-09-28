@@ -89,13 +89,19 @@ const Recruitment = lazy(() => import("./components/Recruitment"));
 const Accreditation = lazy(() => import("./components/Accreditation"));
 const Integrations = lazy(() => import("./components/Integrations"));
 const ProgramHealth = lazy(() => import("./components/ProgramHealth"));
-const ReportingAnalytics = lazy(() => import("./components/ReportingAnalytics"));
+const ReportingAnalytics = lazy(
+  () => import("./components/ReportingAnalytics")
+);
 const DutyHours = lazy(() => import("./components/DutyHours"));
 const GraduateOutcomes = lazy(() => import("./components/GraduateOutcomes"));
 const TraineeHealth = lazy(() => import("./components/TraineeHealth"));
 const FacultyWorkforce = lazy(() => import("./components/FacultyWorkforce"));
-const GrowthOpportunities = lazy(() => import("./components/GrowthOpportunities"));
-const HistoricalAnalysis = lazy(() => import("./components/HistoricalAnalysis"));
+const GrowthOpportunities = lazy(
+  () => import("./components/GrowthOpportunities")
+);
+const HistoricalAnalysis = lazy(
+  () => import("./components/HistoricalAnalysis")
+);
 
 const pages = [
   { id: "overview", label: "Overview", icon: LayoutDashboard },
@@ -955,7 +961,7 @@ export default function App() {
     const p = scope.find((p) => p.program_id === detailId);
     if (!p)
       return (
-        <Empty>Program not found or outside your demo role’s scope.</Empty>
+        <Empty>Program not found or outside your access scope.</Empty>
       );
     const b = latestBoard(p.program_id),
       d = latestDuty(p.program_id),
@@ -1226,7 +1232,7 @@ export default function App() {
             </span>
             <span>
               <LockKeyhole size={12} />
-              Access follows the selected demo role
+              Access follows the selected role
             </span>
           </div>
         </Card>
@@ -1237,7 +1243,7 @@ export default function App() {
     const c = scopedConcerns.find((c) => c.concern_id === detailId);
     if (!c)
       return (
-        <Empty>Concern not found or outside your demo role’s scope.</Empty>
+        <Empty>Concern not found or outside your access scope.</Empty>
       );
     const history = updates
       .filter((u) => u.concern_id === c.concern_id)
@@ -1420,7 +1426,7 @@ export default function App() {
                     </span>
                     <small>
                       PDF, DOC, DOCX, PNG or JPG · 10 MB maximum · Metadata is
-                      retained for this demo session
+                      retained for this session
                     </small>
                   </label>
                   <p className="form-hint">
@@ -1433,14 +1439,14 @@ export default function App() {
                     Save update
                   </button>
                   <p className="form-hint">
-                    Demo edits last until the page is refreshed.
+                    Changes remain available until the page is refreshed.
                   </p>
                 </form>
               ) : (
                 <div className="read-only">
                   <LockKeyhole size={23} />
                   <p>
-                    This demo role has read-only access. Choose a GME
+                    This role has read-only access. Choose a GME
                     Administrator or an assigned program role to maintain
                     records.
                   </p>
@@ -1495,7 +1501,7 @@ export default function App() {
             file_path: `demo://${documentId}/${encodeURIComponent(file.name)}`,
             uploaded_by: userId,
             uploaded_at: now,
-            source: "Demo Client Upload",
+            source: "Client Upload",
             description: "Supporting document added with concern update",
           },
         ]);
@@ -1772,24 +1778,13 @@ export default function App() {
                   {scopedConcerns.filter(isOpen).length}
                 </span>
               )}
-              {currentPage?.id === p.id && <span className="nav-active-dot" />}
             </a>
           ))}
         </nav>
         <div className="sidebar-bottom">
-          {/* <div className="demo-note">
-            <span className="demo-dot" />
-            DEMONSTRATION WORKSPACE
-            <p>
-              Resident & Program
-              <br />
-              Recruitment & Reviews
-            </p>
-            <small>Fictional data · Modules 01–03</small>
-          </div> */}
           <button className="help-button" onClick={() => setModal("help")}>
             <CircleHelp size={18} />
-            Help & demo guide
+            Help
             <ArrowUpRight size={15} />
           </button>
           <div className="sidebar-footer">
@@ -1854,9 +1849,9 @@ export default function App() {
                 .join("")}
             </span>
             <label className="role-switch">
-              <small>VIEWING AS · DEMO ROLE</small>
+              <small>VIEWING AS · ROLE</small>
               <select
-                aria-label="Demo user role"
+                aria-label="User role"
                 value={userId}
                 onChange={(e) => switchUser(e.target.value)}
               >
@@ -1884,22 +1879,50 @@ export default function App() {
               </div>
             }
           >
-          {page === "overview" ? (
-            overview()
-          ) : page === "programs" ? (
-            detailId ? (
-              programDetail()
-            ) : (
-              programsPage()
-            )
-          ) : page === "concerns" ? (
-            detailId ? (
-              concernDetail()
-            ) : (
-              concernsPage()
-            )
-          ) : page === "reports" ? (
-            detailId === "recruitment" ? (
+            {page === "overview" ? (
+              overview()
+            ) : page === "programs" ? (
+              detailId ? (
+                programDetail()
+              ) : (
+                programsPage()
+              )
+            ) : page === "concerns" ? (
+              detailId ? (
+                concernDetail()
+              ) : (
+                concernsPage()
+              )
+            ) : page === "reports" ? (
+              detailId === "recruitment" ? (
+                <Recruitment
+                  userId={userId}
+                  path={route.path}
+                  params={params}
+                  navigate={navigate}
+                  toast={setToast}
+                />
+              ) : detailId === "reviews" || detailId === "ape" ? (
+                <Accreditation
+                  key={route.path}
+                  userId={userId}
+                  path={route.path}
+                  params={params}
+                  navigate={navigate}
+                  toast={setToast}
+                />
+              ) : detailId === "health" ? (
+                <ProgramHealth
+                  userId={userId}
+                  path={route.path}
+                  params={params}
+                  navigate={navigate}
+                  toast={setToast}
+                />
+              ) : (
+                reportsPage()
+              )
+            ) : page === "recruitment" ? (
               <Recruitment
                 userId={userId}
                 path={route.path}
@@ -1907,7 +1930,71 @@ export default function App() {
                 navigate={navigate}
                 toast={setToast}
               />
-            ) : detailId === "reviews" || detailId === "ape" ? (
+            ) : page === "health" ? (
+              <ProgramHealth
+                userId={userId}
+                path={route.path}
+                params={params}
+                navigate={navigate}
+                toast={setToast}
+              />
+            ) : page === "analytics" ? (
+              <ReportingAnalytics
+                userId={userId}
+                path={route.path}
+                params={params}
+                navigate={navigate}
+                toast={setToast}
+              />
+            ) : page === "graduate-outcomes" ? (
+              <GraduateOutcomes
+                userId={userId}
+                path={route.path}
+                params={params}
+                navigate={navigate}
+                toast={setToast}
+              />
+            ) : page === "trainee-health" ? (
+              <TraineeHealth
+                userId={userId}
+                path={route.path}
+                params={params}
+                navigate={navigate}
+                toast={setToast}
+              />
+            ) : page === "faculty-workforce" ? (
+              <FacultyWorkforce
+                userId={userId}
+                path={route.path}
+                params={params}
+                navigate={navigate}
+                toast={setToast}
+              />
+            ) : page === "growth" ? (
+              <GrowthOpportunities
+                userId={userId}
+                path={route.path}
+                params={params}
+                navigate={navigate}
+                toast={setToast}
+              />
+            ) : page === "historical-analysis" ? (
+              <HistoricalAnalysis
+                userId={userId}
+                path={route.path}
+                params={params}
+                navigate={navigate}
+                toast={setToast}
+              />
+            ) : page === "duty-hours" ? (
+              <DutyHours
+                userId={userId}
+                path={route.path}
+                params={params}
+                navigate={navigate}
+                toast={setToast}
+              />
+            ) : page === "reviews" || page === "ape" ? (
               <Accreditation
                 key={route.path}
                 userId={userId}
@@ -1916,8 +2003,8 @@ export default function App() {
                 navigate={navigate}
                 toast={setToast}
               />
-            ) : detailId === "health" ? (
-              <ProgramHealth
+            ) : page === "integrations" ? (
+              <Integrations
                 userId={userId}
                 path={route.path}
                 params={params}
@@ -1925,100 +2012,8 @@ export default function App() {
                 toast={setToast}
               />
             ) : (
-              reportsPage()
-            )
-          ) : page === "recruitment" ? (
-            <Recruitment
-              userId={userId}
-              path={route.path}
-              params={params}
-              navigate={navigate}
-              toast={setToast}
-            />
-          ) : page === "health" ? (
-            <ProgramHealth
-              userId={userId}
-              path={route.path}
-              params={params}
-              navigate={navigate}
-              toast={setToast}
-            />
-          ) : page === "analytics" ? (
-            <ReportingAnalytics
-              userId={userId}
-              path={route.path}
-              params={params}
-              navigate={navigate}
-              toast={setToast}
-            />
-          ) : page === "graduate-outcomes" ? (
-            <GraduateOutcomes
-              userId={userId}
-              path={route.path}
-              params={params}
-              navigate={navigate}
-              toast={setToast}
-            />
-          ) : page === "trainee-health" ? (
-            <TraineeHealth
-              userId={userId}
-              path={route.path}
-              params={params}
-              navigate={navigate}
-              toast={setToast}
-            />
-          ) : page === "faculty-workforce" ? (
-            <FacultyWorkforce
-              userId={userId}
-              path={route.path}
-              params={params}
-              navigate={navigate}
-              toast={setToast}
-            />
-          ) : page === "growth" ? (
-            <GrowthOpportunities
-              userId={userId}
-              path={route.path}
-              params={params}
-              navigate={navigate}
-              toast={setToast}
-            />
-          ) : page === "historical-analysis" ? (
-            <HistoricalAnalysis
-              userId={userId}
-              path={route.path}
-              params={params}
-              navigate={navigate}
-              toast={setToast}
-            />
-          ) : page === "duty-hours" ? (
-            <DutyHours
-              userId={userId}
-              path={route.path}
-              params={params}
-              navigate={navigate}
-              toast={setToast}
-            />
-          ) : page === "reviews" || page === "ape" ? (
-            <Accreditation
-              key={route.path}
-              userId={userId}
-              path={route.path}
-              params={params}
-              navigate={navigate}
-              toast={setToast}
-            />
-          ) : page === "integrations" ? (
-            <Integrations
-              userId={userId}
-              path={route.path}
-              params={params}
-              navigate={navigate}
-              toast={setToast}
-            />
-          ) : (
-            <Empty>Page not found. Use the navigation to continue.</Empty>
-          )}
+              <Empty>Page not found. Use the navigation to continue.</Empty>
+            )}
           </Suspense>
           <footer className="main-footer">
             <span>
@@ -2026,7 +2021,7 @@ export default function App() {
             </span>
             <span>
               <ShieldCheck size={13} />
-              Fictional demonstration data · Generated {date("2026-09-23")}
+              Data updated {date("2026-09-23")}
             </span>
           </footer>
         </main>
@@ -2055,7 +2050,7 @@ export default function App() {
           <div>
             <div className="eyebrow">GME CENTRAL</div>
             <h2>
-              {modal === "new" ? "Create a concern" : "Your demo, at a glance"}
+              {modal === "new" ? "Create a concern" : "Getting started"}
             </h2>
           </div>
           <button
@@ -2119,10 +2114,6 @@ export default function App() {
                 placeholder="Describe the concern…"
               />
             </label>
-            <p className="form-hint">
-              A new record starts as Open – Monitoring. You can update its
-              status at any time. Demo records reset on refresh.
-            </p>
             <button type="submit" className="button primary">
               <Plus size={16} />
               Create concern
@@ -2131,8 +2122,8 @@ export default function App() {
         ) : (
           <div className="help-content">
             <p>
-              This demonstration covers Resident & Program Data Management using
-              the supplied fictional dataset.
+              GME Central brings resident, program, recruitment, and review
+              information together for oversight.
             </p>
             <ol>
               <li>
@@ -2153,9 +2144,9 @@ export default function App() {
               </li>
             </ol>
             <p>
-              Role switching demonstrates program scope; it is not production
-              authentication. Edits reset on refresh. Documents contain metadata
-              only. PDF uses your browser’s print dialog.
+              Role switching updates the programs and actions available to the
+              selected user. Changes reset on refresh. Documents contain
+              metadata only. PDF uses your browser’s print dialog.
             </p>
             <p>
               Academic-year concern filters use the date identified. The

@@ -161,6 +161,6 @@ export function historicalReportMetadata(
     programName: f.program ? programName(f.program) : undefined,
     reportingPeriod: `${f.fromYear || "Earliest available"} – ${f.toYear || "Latest available"}`,
     generatedAt: new Date().toLocaleString("en-US"),
-    dataAsOf: "Current mock-session state",
+    dataAsOf: "Current session state",
   };
 }

@@ -451,7 +451,7 @@ function OpportunityDetail({
   const opportunity = growthOpportunities(userId).find((g) => g.id === id);
   const findings = swotFindings(userId).filter((f) => f.linkedOpportunityId === id);
   if (!opportunity || !scope.has(opportunity.programId))
-    return <Empty>Growth opportunity not found or outside your demo role's scope.</Empty>;
+    return <Empty>Growth opportunity not found or outside your access scope.</Empty>;
   const editable = canEdit(userId, opportunity.programId);
   const updates = growthUpdatesFor(id);
 

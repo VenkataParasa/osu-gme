@@ -259,7 +259,7 @@ export function addGraduateOutcome(
   },
 ) {
   if (!canEdit(userId, fields.programId))
-    throw new Error("Your demo role cannot edit this program.");
+    throw new Error("Your role cannot edit this program.");
   const resident = data.RESIDENT.find((r) => r.resident_id === fields.residentId);
   if (!resident) throw new Error("Choose a valid resident.");
   if (resident.program_id !== fields.programId)

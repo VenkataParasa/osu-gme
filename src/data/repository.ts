@@ -11,7 +11,7 @@ export async function loadMockData(): Promise<Dataset> {
     const url = new URL("data/gme-demo-v2.json", document.baseURI).toString();
     datasetRequest = fetch(url)
       .then((response) => {
-        if (!response.ok) throw new Error(`Unable to load demonstration data (${response.status}).`);
+        if (!response.ok) throw new Error(`Unable to load application data (${response.status}).`);
         return response.json() as Promise<Dataset>;
       })
       .then((dataset) => {
@@ -182,7 +182,7 @@ export function updateConcern(
   now = new Date().toISOString(),
 ): { record: Concern; updates: ConcernUpdate[] } {
   if (!canEdit(userId, record.program_id))
-    throw new Error("Your demo role cannot edit this program.");
+    throw new Error("Your role cannot edit this program.");
   if (
     !classifications.includes(changes.classification) ||
     !statuses.includes(changes.status) ||

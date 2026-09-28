@@ -257,7 +257,7 @@ export function addTraineeHealthMetric(
   },
 ) {
   if (!canEdit(userId, fields.programId))
-    throw new Error("Your demo role cannot edit this program.");
+    throw new Error("Your role cannot edit this program.");
   let assessment = allAssessments().find(
     (a) => a.program_id === fields.programId && a.academic_year === fields.academicYear,
   );

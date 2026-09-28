@@ -195,7 +195,7 @@ export function programHealthIndicators(
         : operation.followUpOpen
           ? "Attention"
           : "On Track",
-      source: operation?.source || "Internal GME · Demo",
+      source: operation?.source || "Internal GME",
       sourcePath: `health/${programId}/operations`,
       updated: operation?.updatedAt,
     },
@@ -244,7 +244,7 @@ export function programHealthIndicators(
       label: "Open growth opportunities",
       value: `${growth.length} open`,
       status: growth.length ? "On Track" : "No Data",
-      source: "Internal GME · Demo",
+      source: "Internal GME",
       sourcePath: `health/${programId}/growth`,
     },
   ];

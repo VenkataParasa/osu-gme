@@ -96,7 +96,7 @@ export default function Accreditation(props: ModuleProps) {
         r.review_id === id && scope.some((p) => p.program_id === r.program_id),
     );
     if (!review)
-      return <Empty>Review not found or outside your demo role’s scope.</Empty>;
+      return <Empty>Review not found or outside your access scope.</Empty>;
     const actions = data.ACTION_ITEM.filter((a) => a.review_id === id),
       followups = data.FOLLOWUP_ACTIVITY.filter((f) => f.review_id === id).sort(
         (a, b) => a.activity_date.localeCompare(b.activity_date),
@@ -441,7 +441,7 @@ export default function Accreditation(props: ModuleProps) {
     const programRecord = scope.find((p) => p.program_id === id);
     if (!programRecord)
       return (
-        <Empty>Program not found or outside your demo role’s scope.</Empty>
+        <Empty>Program not found or outside your access scope.</Empty>
       );
     const row = apeRows(userId, year, id)[0],
       editable = canEdit(userId, id);

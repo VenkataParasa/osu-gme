@@ -10,7 +10,7 @@ root.render(
   <div className="app-loading" role="status" aria-live="polite">
     <span className="app-loading-mark">OSU</span>
     <strong>Loading GME Central</strong>
-    <small>Preparing demonstration data…</small>
+    <small>Preparing your workspace…</small>
   </div>,
 );
 
@@ -26,7 +26,7 @@ async function start() {
   } catch (error) {
     root.render(
       <div className="app-loading app-loading-error" role="alert">
-        <strong>GME Central could not load its demonstration data.</strong>
+        <strong>GME Central could not load its data.</strong>
         <small>{error instanceof Error ? error.message : "Please refresh and try again."}</small>
       </div>,
     );

@@ -432,7 +432,7 @@ export function ActivityHistory({ type, id }: { type: string; id: string }) {
   return (
     <Card
       title="Activity & Status History"
-      subtitle="Changes recorded during this demo session"
+      subtitle="Changes recorded in this session"
     >
       <ol className="module-timeline">
         {entries.map((a) => (

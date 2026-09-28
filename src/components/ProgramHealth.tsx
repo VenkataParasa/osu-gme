@@ -76,7 +76,7 @@ export default function ProgramHealth({
     const snapshot = programHealthSnapshot(userId, detail, year);
     if (!snapshot.program)
       return (
-        <Empty>Program not found or outside your demo role’s scope.</Empty>
+        <Empty>Program not found or outside your access scope.</Empty>
       );
     const visible = path.split("/")[3] || "snapshot";
     const indicators =
@@ -228,7 +228,7 @@ export default function ProgramHealth({
         {visible === "operations" && (
           <Card
             title="Program Operations"
-            subtitle="Configurable operational fixture; no workflow or SLA is implied"
+            subtitle="Operational metrics configured for program oversight"
           >
             <Stats
               items={[
@@ -695,7 +695,7 @@ function GrowthView({
           identifiedDate: String(f.get("identifiedDate")),
           targetDate: String(f.get("targetDate")) || null,
           ownerLabel: String(f.get("owner")),
-          source: "Internal GME · Demo",
+          source: "Internal GME",
           notes: String(f.get("notes")),
         },
         userId,
@@ -711,7 +711,7 @@ function GrowthView({
     <>
       <Card
         title="Growth Opportunities"
-        subtitle="Demo fixture supporting simple opportunity tracking"
+        subtitle="Track and update program opportunities"
       >
         <DataTable
           headers={[

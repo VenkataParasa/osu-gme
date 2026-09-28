@@ -307,7 +307,7 @@ export default function ReportingAnalytics({
       </Card>
       <Card
         title="Recent Reports"
-        subtitle="Runs retained for this browser session"
+        subtitle="Runs retained for this session"
       >
         <DataTable
           headers={["Report", "Generated", "Scope"]}

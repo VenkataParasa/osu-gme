@@ -240,7 +240,7 @@ export default function GraduateOutcomes({ userId, path, params, navigate, toast
                 {
                   label: "Rural / HPSA Placement",
                   value: percent(summary.rural.rate),
-                  detail: `${summary.rural.numerator} of ${summary.rural.denominator} practicing graduates (demo designation)`,
+                  detail: `${summary.rural.numerator} of ${summary.rural.denominator} practicing graduates`,
                 },
               ]
             : []),
@@ -650,7 +650,7 @@ function GraduateOutcomeDetail({
   const [editing, setEditing] = useState(false);
   const scope = new Set(allowedPrograms(userId).map((p) => p.program_id));
   const outcome = data.GRADUATE_OUTCOME.find((g) => g.outcome_id === outcomeId && scope.has(g.program_id));
-  if (!outcome) return <Empty>Graduate outcome not found or outside your demo role's scope.</Empty>;
+  if (!outcome) return <Empty>Graduate outcome not found or outside your access scope.</Empty>;
   const resident = data.RESIDENT.find((r) => r.resident_id === outcome.resident_id);
   const program = data.PROGRAM.find((p) => p.program_id === outcome.program_id);
   const editable = canEdit(userId, outcome.program_id);
@@ -713,8 +713,8 @@ function GraduateOutcomeDetail({
                 <div><dt>City</dt><dd>{outcome.practice_city || "Not recorded"}</dd></div>
                 <div><dt>State</dt><dd>{outcome.practice_state || "Not recorded"}</dd></div>
                 <div><dt>Fellowship Specialty / Program</dt><dd>{outcome.fellowship_or_training_program || "Not applicable"}</dd></div>
-                <div><dt>Rural (demo designation)</dt><dd>{outcome.is_rural == null ? "Unknown" : outcome.is_rural ? "Yes" : "No"}</dd></div>
-                <div><dt>HPSA (demo designation)</dt><dd>{outcome.is_hpsa == null ? "Unknown" : outcome.is_hpsa ? "Yes" : "No"}</dd></div>
+                <div><dt>Rural</dt><dd>{outcome.is_rural == null ? "Unknown" : outcome.is_rural ? "Yes" : "No"}</dd></div>
+                <div><dt>HPSA</dt><dd>{outcome.is_hpsa == null ? "Unknown" : outcome.is_hpsa ? "Yes" : "No"}</dd></div>
                 <div><dt>Source</dt><dd>{outcome.data_source}</dd></div>
                 <div><dt>Verified Date</dt><dd>{date(outcome.last_verified_date)}</dd></div>
               </dl>

@@ -135,7 +135,7 @@ try {
   await expect(page.locator("tbody tr")).toContainText("Submitted");
   await go("integrations");
   await page
-    .getByRole("button", { name: "Simulate New Innovations Sync", exact: true })
+    .getByRole("button", { name: "Run New Innovations Sync", exact: true })
     .click();
   await expect(
     page.getByRole("heading", {
@@ -146,23 +146,23 @@ try {
   await page.screenshot({ path: "/tmp/gme-integrations.png", fullPage: true });
   await go("programs/PRG-004");
   await expect(page.getByText("97.4%", { exact: true }).first()).toBeVisible();
-  await page.getByLabel("Demo user role").selectOption("USR-006");
+  await page.getByLabel("User role").selectOption("USR-006");
   await go("recruitment/applicants");
   await expect(card("Applicant Rankings").locator("tbody tr")).toHaveCount(3);
   await go("reviews/SRV-001");
   await expect(
-    page.getByText("Review not found or outside your demo role’s scope."),
+    page.getByText("Review not found or outside your access scope."),
   ).toBeVisible();
   await go("integrations");
   await expect(
     page.getByText(/Integration operations and institutional sync history/),
   ).toBeVisible();
-  await page.getByLabel("Demo user role").selectOption("USR-001");
+  await page.getByLabel("User role").selectOption("USR-001");
   await go("reviews/SRV-001");
   await expect(
     page.getByRole("button", { name: "Save Status Update" }),
   ).toHaveCount(0);
-  await page.getByLabel("Demo user role").selectOption("USR-004");
+  await page.getByLabel("User role").selectOption("USR-004");
   await page.setViewportSize({ width: 390, height: 844 });
   for (const route of [
     "recruitment",
