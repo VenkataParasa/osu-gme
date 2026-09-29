@@ -5,13 +5,14 @@ import {
   Maximize2, Minus, ChevronUp, ChevronDown, CheckCircle, ShieldCheck, Link, Code, Clock, Send
 } from "lucide-react";
 import mockData from "../data/GME_Central_Demo_Mock_Data_v2.json";
+import BoardGrowthResult from "./BoardGrowthResult";
 import "./spotonix.css";
 
 export default function SpotonixAnalytics() {
   const [tab, setTab] = useState<"result" | "interpreted">("result");
   const [sqlOpen, setSqlOpen] = useState(false);
   const [popupData, setPopupData] = useState<{ show: boolean; x: number; y: number; item: any }>({ show: false, x: 0, y: 0, item: null });
-  const [selectedExampleId, setSelectedExampleId] = useState("total_residents");
+  const [selectedExampleId, setSelectedExampleId] = useState("bottom_board_growth");
   const [chatInput, setChatInput] = useState("");
   const [view, setView] = useState<"analysis" | "brief">("analysis");
   const [watchedMetrics, setWatchedMetrics] = useState<string[]>([]);
@@ -20,7 +21,10 @@ export default function SpotonixAnalytics() {
     setView("analysis");
     if (!chatInput.trim()) return;
     const q = chatInput.toLowerCase();
-    if (q.includes("program") || q.includes("largest")) {
+    if (q.includes("board") || q.includes("bottom") || q.includes("growth opportunit")) {
+      setSelectedExampleId("bottom_board_growth");
+      setTab("result");
+    } else if (q.includes("program") || q.includes("largest")) {
       setSelectedExampleId("top_program");
     } else if (q.includes("leave") || q.includes("absence")) {
       setSelectedExampleId("find_residents_status");
@@ -64,10 +68,52 @@ export default function SpotonixAnalytics() {
     const fellowshipSlots = mockData.PROGRAM.filter(p => p.type === "Fellowship").reduce((acc, p) => acc + (p.slot_count || 0), 0);
     const residencySlots = totalSlots - fellowshipSlots;
 
-    return { activeResidents, totalPrograms, topCount, topProgramName, totalSlots, fellowshipSlots, residencySlots };
+    const bottomPrograms = mockData.PROGRAM.flatMap(program => {
+      const board = mockData.BOARD_PASS_METRIC
+        .filter(metric => metric.program_id === program.program_id)
+        .sort((a, b) => b.reporting_year - a.reporting_year)[0];
+      if (!board || board.three_year_pass_rate == null) return [];
+      const assessments = mockData.PROGRAM_HEALTH_ASSESSMENT
+        .filter(assessment => assessment.program_id === program.program_id)
+        .sort((a, b) => b.assessment_date.localeCompare(a.assessment_date));
+      const opportunities = assessments.flatMap(assessment =>
+        mockData.PROGRAM_HEALTH_METRIC
+          .filter(metric => metric.assessment_id === assessment.assessment_id && metric.metric_category === "Opportunity")
+          .map(metric => ({ title: String(metric.metric_value), year: assessment.academic_year })),
+      ).filter((opportunity, index, all) => all.findIndex(item => item.title === opportunity.title) === index);
+      return [{ id: program.program_id, name: program.name, rate: board.three_year_pass_rate, year: board.reporting_year, opportunities }];
+    }).sort((a, b) => a.rate - b.rate || a.name.localeCompare(b.name)).slice(0, 3);
+
+    return { activeResidents, totalPrograms, topCount, topProgramName, totalSlots, fellowshipSlots, residencySlots, bottomPrograms };
   }, []);
 
   const examples = [
+    {
+      id: "bottom_board_growth",
+      title: "Bottom 3 Board Rates & Growth",
+      fullTitle: "Bottom 3 Programs by Board Pass Rate & Growth Opportunities",
+      metric: computedData.bottomPrograms.length,
+      metricLabel: "programs with the lowest recorded board pass rates",
+      metricSub: "Latest reported 3-year rolling board pass rates",
+      description: computedData.bottomPrograms.map(program => `${program.name}: ${(program.rate * 100).toFixed(1)}%`).join(" · "),
+      date: "28/09/2026",
+      icon: Layers,
+      userQuestion: "What are the bottom 3 programs based on board pass rates, and what are the growth opportunities?",
+      cardTitle: "Bottom 3 Programs",
+      cardTitle2: "& Growth Opportunities",
+      cardSubtitle: "Latest 3-year rolling board pass rates · lowest first",
+      watchMetric: "Board Pass Rates & Growth Opportunities",
+      explorePrompts: [
+        { icon: Aperture, title: "Compare board pass rates over three years", sub: "Review performance before setting improvement targets" },
+        { icon: Layers, title: "Review program growth opportunities", sub: "Connect recorded opportunities with program planning" },
+      ],
+      sql: `WITH latest_board AS (\n  SELECT *, ROW_NUMBER() OVER (\n    PARTITION BY program_id ORDER BY reporting_year DESC\n  ) AS row_num\n  FROM osugme.board_pass_metric\n), bottom_three AS (\n  SELECT p.program_id, p.name, b.reporting_year, b.three_year_pass_rate\n  FROM osugme.program p\n  JOIN latest_board b USING (program_id)\n  WHERE b.row_num = 1 AND b.three_year_pass_rate IS NOT NULL\n  ORDER BY b.three_year_pass_rate, p.name\n  LIMIT 3\n)\nSELECT b.*, a.academic_year, m.metric_value AS growth_opportunity\nFROM bottom_three b\nLEFT JOIN osugme.program_health_assessment a USING (program_id)\nLEFT JOIN osugme.program_health_metric m\n  ON m.assessment_id = a.assessment_id AND m.metric_category = 'Opportunity'\nORDER BY b.three_year_pass_rate, b.name, a.assessment_date DESC;`,
+      kgCards: [
+        { type: "found", title: "3-Year Board Pass Rate", source: "Latest reported rolling rate for each program; missing rates are excluded.", tags: ["Board Reports", "Reporting Year"] },
+        { type: "added", title: "Bottom Three Programs", source: "Sort rates from lowest to highest, breaking ties by program name.", tags: ["Ranking", "Lowest 3"] },
+        { type: "found", title: "Recorded Growth Opportunities", source: "Match opportunity records to each program's health assessments, newest first.", tags: ["Program Health", "Growth"] },
+      ],
+    },
     {
       id: "total_residents",
       title: "Among Active Residents Total...",
@@ -346,7 +392,7 @@ export default function SpotonixAnalytics() {
               style={selectedExampleId === ex.id && view === "analysis" ? { background: "#f0f0f0" } : {}}
               onMouseEnter={(e) => handleMouseEnter(e, ex)}
               onMouseLeave={handleMouseLeave}
-              onClick={() => { setSelectedExampleId(ex.id); setView("analysis"); }}
+              onClick={() => { setSelectedExampleId(ex.id); setView("analysis"); setTab("result"); }}
             >
               <ex.icon size={14} /> {ex.title}
             </div>
@@ -375,7 +421,7 @@ export default function SpotonixAnalytics() {
           <div className="spotonix-middle">
             <div className="spotonix-topbar">
           <div className="spotonix-topbar-pill">
-            <Layers size={14} /> Demo · Synthetic data
+            <Layers size={14} /> AI Analytics
           </div>
           <div style={{position: "absolute", right: 16, display: "flex", gap: "12px", alignItems: "center"}}>
             <div className="spotonix-topbar-pill" style={{background: "white", padding: "4px 8px"}}>
@@ -421,11 +467,17 @@ export default function SpotonixAnalytics() {
                 <button><Bookmark size={14} /></button>
               </div>
 
-              <div className="spotonix-promo-box">
+              {selectedExampleId === "bottom_board_growth" ? (
+                <div className="spotonix-board-summary">
+                  <h3>What the results show</h3>
+                  <p>{selectedExample.description}.</p>
+                  <p>Review the chart and recorded growth opportunities in the result panel. These opportunities support planning; they do not establish the cause of board performance.</p>
+                </div>
+              ) : <div className="spotonix-promo-box">
                 <h3>Talk to us about your data</h3>
                 <p>See how Spotonix can ground the same analyst workflow in your metrics and context.</p>
                 <button onClick={() => window.location.href = "mailto:Sales@spotonix.com"}>Talk to us about your data <ArrowUpRight size={14}/></button>
-              </div>
+              </div>}
             </div>
           </div>
 
@@ -434,11 +486,12 @@ export default function SpotonixAnalytics() {
               type="text"
               className="spotonix-chat-input"
               placeholder="Ask about your data..."
+              aria-label="Ask about your data"
               value={chatInput}
               onChange={(e) => setChatInput(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleChatSubmit()}
             />
-            <button className="spotonix-chat-send" onClick={handleChatSubmit}>
+            <button className="spotonix-chat-send" aria-label="Send question" onClick={handleChatSubmit}>
               <Send size={14} color="white" />
             </button>
           </div>
@@ -459,6 +512,7 @@ export default function SpotonixAnalytics() {
 
         {tab === "result" && (
           <div className="spotonix-right-content">
+            {selectedExampleId === "bottom_board_growth" ? <BoardGrowthResult programs={computedData.bottomPrograms} /> : <>
             <div className="spotonix-big-metric">
               <h1>{selectedExample.metric}</h1>
               <span>{selectedExample.metricLabel}</span>
@@ -469,6 +523,7 @@ export default function SpotonixAnalytics() {
                 <span>{(selectedExample as any).metric2Label}</span>
               </div>
             )}
+            </>}
 
             <div className="spotonix-panel-section" style={{marginTop: 32}}>
               <div className="spotonix-panel-header">
@@ -498,12 +553,12 @@ export default function SpotonixAnalytics() {
               </div>
             </div>
 
-            <div className="spotonix-panel-section">
+            {selectedExampleId !== "bottom_board_growth" && <div className="spotonix-panel-section">
               <div className="spotonix-panel-header" style={{background: "white", borderBottom: "none"}}>
                 <div style={{display: "flex", alignItems: "center", gap: 8}}><Menu size={16}/> Data Table (1 rows)</div>
                 <ChevronDown size={16} />
               </div>
-            </div>
+            </div>}
 
             <div className="spotonix-what-tells">
               <h4 style={{fontSize: 12}}>EXPLORE FURTHER</h4>
