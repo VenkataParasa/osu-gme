@@ -131,7 +131,7 @@ export default function ReportingAnalytics({
       />
     </div>
   );
-  
+
   if (view === "spotonix") {
     return <SpotonixAnalytics />;
   }

@@ -10,10 +10,11 @@
     "test": "tsx --test tests/*.test.ts",
     "format": "prettier --write src/**/*.ts src/**/*.tsx src/*.tsx src/styles.css tests/*.ts tests/*.mjs vite.config.ts",
     "test:browser": "node tests/browser-check.mjs",
-    "test:extensions": "node tests/extensions-check.mjs"
-    ,"test:health": "node tests/program-health-check.mjs"
+    "test:extensions": "node tests/extensions-check.mjs",
+    "test:health": "node tests/program-health-check.mjs"
   },
   "dependencies": {
+    "@vercel/analytics": "^2.0.1",
     "lucide-react": "^0.468.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
